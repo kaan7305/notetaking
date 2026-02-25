@@ -103,6 +103,21 @@ class NotebookDao {
 
   // ──────────────────── queries ────────────────────
 
+  Future<Result<List<Notebook>>> getByUserId(String userId) async {
+    try {
+      final db = await _dbHelper.database;
+      final maps = await db.query(
+        'notebooks',
+        where: 'user_id = ?',
+        whereArgs: [userId],
+        orderBy: 'updated_at DESC',
+      );
+      return Success(maps.map(_fromMap).toList());
+    } catch (e) {
+      return Failure('Failed to get notebooks for user', e);
+    }
+  }
+
   Future<Result<List<Notebook>>> getByCourseId(String courseId) async {
     try {
       final db = await _dbHelper.database;

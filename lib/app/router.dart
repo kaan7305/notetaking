@@ -6,6 +6,8 @@ import '../features/auth/auth_provider.dart';
 import '../features/auth/auth_state.dart';
 import '../features/auth/login_screen.dart';
 import '../features/auth/signup_screen.dart';
+import '../features/courses/course_detail_screen.dart';
+import '../features/courses/library_screen.dart';
 import 'route_names.dart';
 
 /// Provides a [GoRouter] instance that reacts to authentication state changes.
@@ -49,15 +51,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.home,
         name: RouteNames.home,
-        builder: (context, state) =>
-            const PlaceholderScreen(title: 'Library'),
+        builder: (context, state) => const LibraryScreen(),
       ),
       GoRoute(
         path: RoutePaths.courseDetail,
         name: RouteNames.courseDetail,
         builder: (context, state) {
           final courseId = state.pathParameters['courseId']!;
-          return PlaceholderScreen(title: 'Course $courseId');
+          return CourseDetailScreen(courseId: courseId);
         },
         routes: [
           GoRoute(
