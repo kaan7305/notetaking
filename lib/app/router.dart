@@ -11,6 +11,7 @@ import '../features/courses/library_screen.dart';
 import '../features/documents/viewer/document_viewer_screen.dart';
 import '../features/lecture_capture/lecture_capture_screen.dart';
 import '../features/notebook/notebook_screen.dart';
+import '../features/review/review_screen.dart';
 import 'route_names.dart';
 
 /// Provides a [GoRouter] instance that reacts to authentication state changes.
@@ -106,6 +107,14 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) {
               final courseId = state.pathParameters['courseId']!;
               return LectureCaptureScreen(courseId: courseId);
+            },
+          ),
+          GoRoute(
+            path: 'review',
+            name: RouteNames.review,
+            builder: (context, state) {
+              final courseId = state.pathParameters['courseId']!;
+              return ReviewScreen(courseId: courseId);
             },
           ),
         ],

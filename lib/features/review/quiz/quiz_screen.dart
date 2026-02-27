@@ -1,0 +1,317 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:study_notebook/app/colors.dart';
+
+import '../practice/practice_provider.dart';
+
+/// Quiz screen with multiple-choice questions.
+class QuizScreen extends ConsumerWidget {
+  final String courseId;
+
+  const QuizScreen({super.key, required this.courseId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(practiceProvider(courseId));
+    final notifier = ref.read(practiceProvider(courseId).notifier);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Practice Quiz'),
+        actions: [
+          if (state.questions.isNotEmpty && !state.isComplete)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: Text(
+                  '${state.currentIndex + 1} / ${state.questions.length}',
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ),
+            ),
+        ],
+      ),
+      body: state.questions.isEmpty
+          ? _EmptyState(
+              isGenerating: state.isGenerating,
+              error: state.error,
+              onGenerate: () => notifier.generateQuestions(),
+            )
+          : state.isComplete
+              ? _CompletionScreen(
+                  correct: state.correctCount,
+                  total: state.questions.length,
+                  onRestart: () => notifier.restart(),
+                )
+              : _QuestionView(
+                  question: state.currentQuestion!,
+                  selectedAnswer: state.selectedAnswer,
+                  showExplanation: state.showExplanation,
+                  onSelect: (index) => notifier.selectAnswer(index),
+                  onNext: () => notifier.nextQuestion(),
+                ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  final bool isGenerating;
+  final String? error;
+  final VoidCallback onGenerate;
+
+  const _EmptyState({
+    required this.isGenerating,
+    this.error,
+    required this.onGenerate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.quiz, size: 64, color: Colors.grey.shade300),
+            const SizedBox(height: 16),
+            const Text(
+              'Generate practice questions from your course documents',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 15, color: Colors.grey),
+            ),
+            const SizedBox(height: 24),
+            if (error != null) ...[
+              Text(error!,
+                  style: const TextStyle(color: AppColors.error, fontSize: 13)),
+              const SizedBox(height: 12),
+            ],
+            FilledButton.icon(
+              onPressed: isGenerating ? null : onGenerate,
+              icon: isGenerating
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Icon(Icons.auto_awesome),
+              label: Text(
+                  isGenerating ? 'Generating...' : 'Generate Practice Quiz'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _QuestionView extends StatelessWidget {
+  final PracticeQuestion question;
+  final int? selectedAnswer;
+  final bool showExplanation;
+  final ValueChanged<int> onSelect;
+  final VoidCallback onNext;
+
+  const _QuestionView({
+    required this.question,
+    this.selectedAnswer,
+    required this.showExplanation,
+    required this.onSelect,
+    required this.onNext,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Question.
+          Text(
+            question.question,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, height: 1.5),
+          ),
+          const SizedBox(height: 24),
+
+          // Options.
+          ...question.options.asMap().entries.map((entry) {
+            final index = entry.key;
+            final option = entry.value;
+            final isSelected = selectedAnswer == index;
+            final isCorrect = index == question.correctIndex;
+
+            Color? bgColor;
+            Color? borderColor;
+            if (showExplanation) {
+              if (isCorrect) {
+                bgColor = AppColors.success.withValues(alpha: 0.1);
+                borderColor = AppColors.success;
+              } else if (isSelected) {
+                bgColor = AppColors.error.withValues(alpha: 0.1);
+                borderColor = AppColors.error;
+              }
+            } else if (isSelected) {
+              bgColor = AppColors.primary.withValues(alpha: 0.1);
+              borderColor = AppColors.primary;
+            }
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Material(
+                color: bgColor ?? Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: showExplanation ? null : () => onSelect(index),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: borderColor ?? Colors.grey.shade300,
+                        width: isSelected || (showExplanation && isCorrect)
+                            ? 2
+                            : 1,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: borderColor ?? Colors.grey.shade400,
+                            ),
+                            color: isSelected || (showExplanation && isCorrect)
+                                ? borderColor
+                                : null,
+                          ),
+                          child: Center(
+                            child: Text(
+                              String.fromCharCode(65 + index), // A, B, C, D
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                                color:
+                                    isSelected || (showExplanation && isCorrect)
+                                        ? Colors.white
+                                        : null,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(option, style: const TextStyle(fontSize: 15)),
+                        ),
+                        if (showExplanation && isCorrect)
+                          const Icon(Icons.check_circle,
+                              color: AppColors.success, size: 22),
+                        if (showExplanation && isSelected && !isCorrect)
+                          const Icon(Icons.cancel,
+                              color: AppColors.error, size: 22),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+
+          // Explanation.
+          if (showExplanation) ...[
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Explanation',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w600, fontSize: 14),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      question.explanation,
+                      style: const TextStyle(height: 1.5),
+                    ),
+                    if (question.sourceDocument != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        'Source: ${question.sourceDocument}${question.sourcePage != null ? ', p.${question.sourcePage}' : ''}',
+                        style: TextStyle(
+                            fontSize: 12, color: Colors.grey.shade600),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: onNext,
+              child: const Text('Next Question'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _CompletionScreen extends StatelessWidget {
+  final int correct;
+  final int total;
+  final VoidCallback onRestart;
+
+  const _CompletionScreen({
+    required this.correct,
+    required this.total,
+    required this.onRestart,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final percentage = total > 0 ? (correct / total * 100).round() : 0;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              percentage >= 70 ? Icons.emoji_events : Icons.school,
+              size: 64,
+              color:
+                  percentage >= 70 ? AppColors.warning : AppColors.primary,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Quiz Complete!',
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '$correct / $total correct ($percentage%)',
+              style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: onRestart,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Try Again'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

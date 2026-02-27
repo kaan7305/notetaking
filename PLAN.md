@@ -30,9 +30,9 @@
 - [x] 6.3 Structured notes generator
 
 ## Phase 7: Review & Study Tools
-- [ ] 7.1 Flashcard generation + review UI
-- [ ] 7.2 Practice question generation
-- [ ] 7.3 Quiz UI
+- [x] 7.1 Flashcard generation + review UI
+- [x] 7.2 Practice question generation
+- [x] 7.3 Quiz UI
 
 ## Phase 8: Polish
 - [ ] 8.1 Search functionality
