@@ -8,6 +8,7 @@ import '../features/auth/login_screen.dart';
 import '../features/auth/signup_screen.dart';
 import '../features/courses/course_detail_screen.dart';
 import '../features/courses/library_screen.dart';
+import '../features/notebook/notebook_screen.dart';
 import 'route_names.dart';
 
 /// Provides a [GoRouter] instance that reacts to authentication state changes.
@@ -65,8 +66,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: 'notebook/:notebookId',
             name: RouteNames.notebook,
             builder: (context, state) {
+              final courseId = state.pathParameters['courseId']!;
               final notebookId = state.pathParameters['notebookId']!;
-              return PlaceholderScreen(title: 'Notebook $notebookId');
+              return NotebookScreen(
+                notebookId: notebookId,
+                courseId: courseId,
+              );
             },
           ),
           GoRoute(
