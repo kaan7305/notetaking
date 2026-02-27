@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -11,6 +10,7 @@ import '../features/courses/library_screen.dart';
 import '../features/documents/viewer/document_viewer_screen.dart';
 import '../features/lecture_capture/lecture_capture_screen.dart';
 import '../features/notebook/notebook_screen.dart';
+import '../features/auth/settings_screen.dart';
 import '../features/review/review_screen.dart';
 import 'route_names.dart';
 
@@ -82,7 +82,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             name: RouteNames.documents,
             builder: (context, state) {
               final courseId = state.pathParameters['courseId']!;
-              return PlaceholderScreen(title: 'Documents for $courseId');
+              return CourseDetailScreen(courseId: courseId);
             },
           ),
           GoRoute(
@@ -119,20 +119,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
         ],
       ),
+      GoRoute(
+        path: RoutePaths.settings,
+        name: RouteNames.settings,
+        builder: (context, state) => const SettingsScreen(),
+      ),
     ],
   );
 });
-
-/// Temporary placeholder screen used until real feature screens are built.
-class PlaceholderScreen extends StatelessWidget {
-  final String title;
-  const PlaceholderScreen({super.key, required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(child: Text(title)),
-    );
-  }
-}

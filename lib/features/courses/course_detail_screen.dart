@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:study_notebook/app/colors.dart';
+import 'package:study_notebook/app/route_names.dart';
 import 'package:study_notebook/core/providers/course_provider.dart';
 import 'package:study_notebook/core/providers/notebook_provider.dart';
 import 'package:study_notebook/core/utils/constants.dart';
@@ -64,6 +66,24 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
     return Scaffold(
       appBar: AppBar(
         title: Text(courseName),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.mic_outlined),
+            tooltip: 'Lecture Capture',
+            onPressed: () => context.pushNamed(
+              RouteNames.lectureCapture,
+              pathParameters: {'courseId': widget.courseId},
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.quiz_outlined),
+            tooltip: 'Review & Quiz',
+            onPressed: () => context.pushNamed(
+              RouteNames.review,
+              pathParameters: {'courseId': widget.courseId},
+            ),
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           labelColor: AppColors.primary,

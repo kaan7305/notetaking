@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:study_notebook/core/models/notebook.dart';
 import 'package:study_notebook/core/providers/course_provider.dart';
 import 'package:study_notebook/core/providers/notebook_provider.dart';
+import 'package:study_notebook/core/providers/search_provider.dart';
 import 'package:study_notebook/core/utils/constants.dart';
 import 'package:study_notebook/features/courses/widgets/create_course_dialog.dart';
 import 'package:study_notebook/features/courses/widgets/create_notebook_dialog.dart';
@@ -66,7 +67,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final coursesAsync = ref.watch(courseProvider);
+    final query = ref.watch(searchQueryProvider);
+    final coursesAsync = query.isEmpty
+        ? ref.watch(courseProvider)
+        : ref.watch(filteredCoursesProvider);
 
     // Determine which notebooks to show based on selection.
     final List<Notebook> visibleNotebooks;
@@ -74,15 +78,24 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     final String? notebookError;
 
     if (_selectedCourseId == null) {
-      // All Notes view
-      final allAsync = ref.watch(allNotebooksProvider);
+      // All Notes view — apply search filter when query is active.
+      final allAsync = query.isEmpty
+          ? ref.watch(allNotebooksProvider)
+          : ref.watch(filteredNotebooksProvider);
       visibleNotebooks = allAsync.valueOrNull ?? [];
       isLoadingNotebooks = allAsync.isLoading;
       notebookError = allAsync.hasError ? allAsync.error.toString() : null;
     } else {
       // Per-course view
       final courseAsync = ref.watch(notebookProvider(_selectedCourseId!));
-      visibleNotebooks = courseAsync.valueOrNull ?? [];
+      final notebooks = courseAsync.valueOrNull ?? [];
+      // Apply local search filter within selected course.
+      visibleNotebooks = query.isEmpty
+          ? notebooks
+          : notebooks
+              .where(
+                  (n) => n.title.toLowerCase().contains(query.toLowerCase()))
+              .toList();
       isLoadingNotebooks = courseAsync.isLoading;
       notebookError = courseAsync.hasError ? courseAsync.error.toString() : null;
     }

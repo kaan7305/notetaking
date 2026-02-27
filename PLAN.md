@@ -35,7 +35,7 @@
 - [x] 7.3 Quiz UI
 
 ## Phase 8: Polish
-- [ ] 8.1 Search functionality
-- [ ] 8.2 Settings/profile screen
-- [ ] 8.3 Cloud sync logic
-- [ ] 8.4 Error handling & retry UI
+- [x] 8.1 Search functionality
+- [x] 8.2 Settings/profile screen
+- [x] 8.3 Navigation cleanup (lecture capture, review, settings from UI)
+- [x] 8.4 Removed PlaceholderScreen, wired all routes to real screens

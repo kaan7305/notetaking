@@ -11,6 +11,7 @@ class RouteNames {
   static const String documentViewer = 'documentViewer';
   static const String lectureCapture = 'lectureCapture';
   static const String review = 'review';
+  static const String settings = 'settings';
 }
 
 /// Centralized route path constants used in GoRoute definitions.
@@ -26,4 +27,5 @@ class RoutePaths {
   static const String documentViewer = '/course/:courseId/document/:documentId';
   static const String lectureCapture = '/course/:courseId/lecture';
   static const String review = '/course/:courseId/review';
+  static const String settings = '/settings';
 }

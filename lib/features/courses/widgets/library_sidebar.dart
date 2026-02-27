@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:study_notebook/app/colors.dart';
+import 'package:study_notebook/app/route_names.dart';
 import 'package:study_notebook/core/models/course.dart';
+import 'package:study_notebook/core/providers/search_provider.dart';
 import 'package:study_notebook/core/utils/constants.dart';
 import 'package:study_notebook/features/courses/widgets/course_card.dart';
 
@@ -53,10 +56,13 @@ class LibrarySidebar extends ConsumerWidget {
             // -- Settings icon ------------------------------------------------
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-              child: Icon(
-                Icons.settings_outlined,
-                color: AppColors.sidebarText.withValues(alpha: 0.7),
-                size: 22,
+              child: GestureDetector(
+                onTap: () => context.pushNamed(RouteNames.settings),
+                child: Icon(
+                  Icons.settings_outlined,
+                  color: AppColors.sidebarText.withValues(alpha: 0.7),
+                  size: 22,
+                ),
               ),
             ),
 
@@ -64,6 +70,8 @@ class LibrarySidebar extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: TextField(
+                onChanged: (value) =>
+                    ref.read(searchQueryProvider.notifier).state = value,
                 style: const TextStyle(
                   color: AppColors.sidebarText,
                   fontSize: 14,
