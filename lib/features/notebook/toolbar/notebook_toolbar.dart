@@ -13,11 +13,15 @@ import 'stroke_width_slider.dart';
 class NotebookToolbar extends ConsumerStatefulWidget {
   final String pageId;
   final VoidCallback? onTogglePageSidebar;
+  final VoidCallback? onToggleAiPanel;
+  final bool isAiPanelOpen;
 
   const NotebookToolbar({
     super.key,
     required this.pageId,
     this.onTogglePageSidebar,
+    this.onToggleAiPanel,
+    this.isAiPanelOpen = false,
   });
 
   @override
@@ -113,6 +117,17 @@ class _NotebookToolbarState extends ConsumerState<NotebookToolbar> {
                 onPressed: canvasState.canRedo ? () => _redo() : null,
                 tooltip: 'Redo',
               ),
+
+              const VerticalDivider(width: 1),
+
+              // AI Assistant toggle.
+              if (widget.onToggleAiPanel != null)
+                _ToolbarButton(
+                  icon: Icons.auto_awesome,
+                  iconColor: widget.isAiPanelOpen ? AppColors.primary : null,
+                  onPressed: widget.onToggleAiPanel!,
+                  tooltip: 'AI Assistant',
+                ),
             ],
           ),
         ),

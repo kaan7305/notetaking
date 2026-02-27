@@ -6,6 +6,8 @@ import 'package:study_notebook/core/models/models.dart';
 import 'package:study_notebook/core/providers/page_provider.dart';
 import 'package:study_notebook/core/utils/constants.dart';
 
+import 'package:study_notebook/features/ai_assistant/chat/ai_chat_panel.dart';
+
 import 'canvas/canvas_notifier.dart';
 import 'canvas/drawing_canvas.dart';
 import 'pages/page_sidebar.dart';
@@ -28,6 +30,7 @@ class NotebookScreen extends ConsumerStatefulWidget {
 
 class _NotebookScreenState extends ConsumerState<NotebookScreen> {
   bool _showPageSidebar = true;
+  bool _showAiPanel = false;
   String? _selectedPageId;
 
   @override
@@ -60,6 +63,10 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
                   onTogglePageSidebar: () {
                     setState(() => _showPageSidebar = !_showPageSidebar);
                   },
+                  onToggleAiPanel: () {
+                    setState(() => _showAiPanel = !_showAiPanel);
+                  },
+                  isAiPanelOpen: _showAiPanel,
                 ),
 
                 // Canvas + optional page sidebar.
@@ -84,6 +91,10 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
                           page: currentPage,
                         ),
                       ),
+
+                      // AI chat panel.
+                      if (_showAiPanel)
+                        AiChatPanel(courseId: widget.courseId),
                     ],
                   ),
                 ),

@@ -18,11 +18,11 @@
 - [x] 4.3 Document list in course detail screen
 
 ## Phase 5: AI Assistant
-- [ ] 5.1 AI chat panel UI (slide-out drawer)
-- [ ] 5.2 Hint/Check/Solve mode selector
-- [ ] 5.3 Canvas-to-image capture for Check mode
-- [ ] 5.4 API integration for AI chat (backend calls)
-- [ ] 5.5 Source reference display with page links
+- [x] 5.1 AI chat panel UI (slide-out drawer)
+- [x] 5.2 Hint/Check/Solve mode selector
+- [x] 5.3 Canvas-to-image capture for Check mode
+- [x] 5.4 API integration for AI chat (backend calls)
+- [x] 5.5 Source reference display with page links
 
 ## Phase 6: Lecture Capture
 - [ ] 6.1 Audio recorder UI
