@@ -127,6 +127,7 @@ final notebookProvider = StateNotifierProvider.family<NotebookNotifier,
   final authState = ref.watch(authProvider);
   final userId = switch (authState) {
     AuthAuthenticated(user: final u) => u.id,
+    AuthDemo(userId: final id) => id,
     _ => '',
   };
   return NotebookNotifier(NotebookDao(), PageDao(), courseId, userId);
@@ -165,6 +166,7 @@ final allNotebooksProvider =
   final authState = ref.watch(authProvider);
   final userId = switch (authState) {
     AuthAuthenticated(user: final u) => u.id,
+    AuthDemo(userId: final id) => id,
     _ => '',
   };
   return AllNotebooksNotifier(NotebookDao(), userId);

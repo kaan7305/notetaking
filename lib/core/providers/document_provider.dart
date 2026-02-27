@@ -135,7 +135,10 @@ final documentProvider = StateNotifierProvider.family<DocumentNotifier,
     AsyncValue<List<Document>>, String>((ref, courseId) {
   final supabase = ref.watch(supabaseClientProvider);
   final authState = ref.watch(authProvider);
-  final userId =
-      authState is AuthAuthenticated ? authState.user.id : '';
+  final userId = switch (authState) {
+    AuthAuthenticated(user: final u) => u.id,
+    AuthDemo(userId: final id) => id,
+    _ => '',
+  };
   return DocumentNotifier(DocumentDao(), supabase, courseId, userId);
 });

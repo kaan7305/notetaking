@@ -25,7 +25,8 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: RoutePaths.home,
     debugLogDiagnostics: true,
     redirect: (context, state) {
-      final isAuthenticated = authState is AuthAuthenticated;
+      final isAuthenticated =
+          authState is AuthAuthenticated || authState is AuthDemo;
       final isAuthRoute = state.matchedLocation == RoutePaths.login ||
           state.matchedLocation == RoutePaths.signup;
 

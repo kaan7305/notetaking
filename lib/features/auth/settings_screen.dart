@@ -13,7 +13,11 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
-    final email = authState is AuthAuthenticated ? authState.user.email : null;
+    final email = switch (authState) {
+      AuthAuthenticated(user: final u) => u.email,
+      AuthDemo(email: final e) => e,
+      _ => null,
+    };
 
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),

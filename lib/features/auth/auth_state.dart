@@ -29,6 +29,13 @@ class AuthUnauthenticated extends AuthState {
   const AuthUnauthenticated();
 }
 
+/// The user is signed in via demo mode (no real Supabase session).
+class AuthDemo extends AuthState {
+  final String userId;
+  final String email;
+  const AuthDemo({this.userId = 'demo-user', this.email = 'demo@studynotebook.app'});
+}
+
 /// An error occurred during an auth operation.
 class AuthError extends AuthState {
   final String message;

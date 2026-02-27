@@ -83,6 +83,7 @@ final courseProvider =
   final authState = ref.watch(authProvider);
   final userId = switch (authState) {
     AuthAuthenticated(user: final u) => u.id,
+    AuthDemo(userId: final id) => id,
     _ => '',
   };
   return CourseNotifier(CourseDao(), userId);

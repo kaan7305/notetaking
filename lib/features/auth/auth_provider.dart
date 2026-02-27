@@ -71,8 +71,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  /// Signs in as a demo user without hitting Supabase.
+  void signInDemo() {
+    state = const AuthDemo();
+  }
+
   /// Signs out the current user.
   Future<void> signOut() async {
+    if (state is AuthDemo) {
+      state = const AuthUnauthenticated();
+      return;
+    }
     try {
       await _client.auth.signOut();
     } catch (e) {

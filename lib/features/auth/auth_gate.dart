@@ -29,6 +29,11 @@ class AuthGate extends ConsumerWidget {
             child: Text('Authenticated! (Router placeholder)'),
           ),
         ),
+      AuthDemo() => const Scaffold(
+          body: Center(
+            child: Text('Demo mode! (Router placeholder)'),
+          ),
+        ),
       AuthUnauthenticated() => const LoginScreen(),
       AuthError() => const LoginScreen(),
     };

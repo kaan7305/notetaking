@@ -138,6 +138,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           },
                     child: const Text("Don't have an account? Sign Up"),
                   ),
+
+                  const SizedBox(height: 24),
+
+                  // Demo mode
+                  OutlinedButton.icon(
+                    onPressed: isLoading
+                        ? null
+                        : () {
+                            ref.read(authProvider.notifier).signInDemo();
+                          },
+                    icon: const Icon(Icons.play_arrow_outlined),
+                    label: const Text('Try Demo'),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 48),
+                    ),
+                  ),
                 ],
               ),
             ),
