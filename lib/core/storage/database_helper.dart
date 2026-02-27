@@ -1,9 +1,13 @@
-import 'package:path_provider/path_provider.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:sqflite/sqflite.dart';
 
 import 'database_tables.dart';
 
 /// Singleton helper that manages the SQLite database lifecycle.
+///
+/// On native (iOS/Android/desktop) uses the default sqflite path.
+/// On web, relies on the [databaseFactory] being set to the FFI-web
+/// factory before any database access (see main.dart).
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
@@ -18,8 +22,14 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDatabase() async {
-    final documentsDir = await getApplicationDocumentsDirectory();
-    final path = '${documentsDir.path}/study_notebook.db';
+    final String path;
+    if (kIsWeb) {
+      // On web the FFI-web factory stores in IndexedDB; just use a name.
+      path = 'study_notebook.db';
+    } else {
+      final dbPath = await getDatabasesPath();
+      path = '$dbPath/study_notebook.db';
+    }
 
     return openDatabase(
       path,
