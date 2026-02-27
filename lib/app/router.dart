@@ -8,6 +8,7 @@ import '../features/auth/login_screen.dart';
 import '../features/auth/signup_screen.dart';
 import '../features/courses/course_detail_screen.dart';
 import '../features/courses/library_screen.dart';
+import '../features/documents/viewer/document_viewer_screen.dart';
 import '../features/notebook/notebook_screen.dart';
 import 'route_names.dart';
 
@@ -86,11 +87,16 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: 'document/:documentId',
             name: RouteNames.documentViewer,
             builder: (context, state) {
+              final courseId = state.pathParameters['courseId']!;
               final documentId = state.pathParameters['documentId']!;
               final page = int.tryParse(
                       state.uri.queryParameters['page'] ?? '') ??
                   1;
-              return PlaceholderScreen(title: 'Doc $documentId p.$page');
+              return DocumentViewerScreen(
+                courseId: courseId,
+                documentId: documentId,
+                initialPage: page,
+              );
             },
           ),
         ],

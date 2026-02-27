@@ -7,6 +7,7 @@ import 'package:study_notebook/core/providers/notebook_provider.dart';
 import 'package:study_notebook/core/utils/constants.dart';
 import 'package:study_notebook/features/courses/widgets/create_notebook_dialog.dart';
 import 'package:study_notebook/features/courses/widgets/notebook_card.dart';
+import 'package:study_notebook/features/documents/document_list.dart';
 
 /// Screen for viewing a single course's content.
 ///
@@ -80,8 +81,8 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
           // ── Notebooks tab ─────────────────────────────────
           _buildNotebooksTab(notebooksAsync),
 
-          // ── Documents tab (placeholder) ───────────────────
-          _buildDocumentsPlaceholder(),
+          // ── Documents tab ───────────────────────────────
+          DocumentList(courseId: widget.courseId),
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -167,26 +168,4 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Documents placeholder
-  // ---------------------------------------------------------------------------
-
-  Widget _buildDocumentsPlaceholder() {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.folder_outlined, size: 64, color: Colors.grey.shade300),
-          const SizedBox(height: 16),
-          Text(
-            'Documents coming soon',
-            style: TextStyle(
-              fontSize: 15,
-              color: Colors.grey.shade500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

@@ -13,9 +13,9 @@
 - [x] 3.6 Notebook screen integrating canvas + toolbar + pages
 
 ## Phase 4: Document Upload & Viewer
-- [ ] 4.1 Document upload UI + Supabase Storage integration
-- [ ] 4.2 PDF viewer with pdfrx
-- [ ] 4.3 Document list in course detail screen
+- [x] 4.1 Document upload UI + Supabase Storage integration
+- [x] 4.2 PDF viewer with pdfrx
+- [x] 4.3 Document list in course detail screen
 
 ## Phase 5: AI Assistant
 - [ ] 5.1 AI chat panel UI (slide-out drawer)
