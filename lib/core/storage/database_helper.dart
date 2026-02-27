@@ -33,14 +33,26 @@ class DatabaseHelper {
 
     return openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
   }
 
   Future<void> _onCreate(Database db, int version) async {
     for (final statement in DatabaseTables.allCreateStatements) {
       await db.execute(statement);
+    }
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute(
+        "ALTER TABLE pages ADD COLUMN background_color TEXT DEFAULT '#FFFFFF'",
+      );
+      await db.execute(
+        'ALTER TABLE pages ADD COLUMN line_spacing REAL DEFAULT 32.0',
+      );
     }
   }
 

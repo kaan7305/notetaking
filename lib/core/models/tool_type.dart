@@ -1,1 +1,1 @@
-enum ToolType { pen, highlighter, eraser, lasso, text, none }
+enum ToolType { pen, highlighter, eraser, lasso, text, pointer, none }

@@ -40,6 +40,8 @@ class DatabaseTables {
       notebook_id TEXT NOT NULL REFERENCES notebooks(id),
       page_number INTEGER NOT NULL,
       template_type TEXT DEFAULT 'blank',
+      background_color TEXT DEFAULT '#FFFFFF',
+      line_spacing REAL DEFAULT 32.0,
       thumbnail_path TEXT,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL,

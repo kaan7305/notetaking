@@ -32,10 +32,13 @@ class NotebookNotifier extends StateNotifier<AsyncValue<List<Notebook>>> {
     }
   }
 
-  /// Creates a new notebook with an initial blank page.
+  /// Creates a new notebook with an initial page.
   Future<Result<Notebook>> createNotebook(
     String title, {
     String pageSize = 'letter',
+    String templateType = 'blank',
+    String backgroundColor = '#FFFFFF',
+    double lineSpacing = 32.0,
   }) async {
     final now = DateTime.now();
     final notebookId = const Uuid().v4();
@@ -52,12 +55,14 @@ class NotebookNotifier extends StateNotifier<AsyncValue<List<Notebook>>> {
     final insertResult = await _dao.insert(notebook);
     switch (insertResult) {
       case Success():
-        // Create the first blank page for this notebook.
+        // Create the first page for this notebook.
         final firstPage = PageModel(
           id: const Uuid().v4(),
           notebookId: notebookId,
           pageNumber: 1,
-          templateType: 'blank',
+          templateType: templateType,
+          backgroundColor: backgroundColor,
+          lineSpacing: lineSpacing,
           createdAt: now,
           updatedAt: now,
         );

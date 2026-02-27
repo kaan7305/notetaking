@@ -26,6 +26,8 @@ mixin _$PageModel {
   int get pageNumber => throw _privateConstructorUsedError;
   String get templateType =>
       throw _privateConstructorUsedError; // 'blank' | 'lined' | 'grid' | 'dotted'
+  String get backgroundColor => throw _privateConstructorUsedError;
+  double get lineSpacing => throw _privateConstructorUsedError;
   String? get thumbnailPath => throw _privateConstructorUsedError;
   DateTime get createdAt => throw _privateConstructorUsedError;
   DateTime get updatedAt => throw _privateConstructorUsedError;
@@ -51,6 +53,8 @@ abstract class $PageModelCopyWith<$Res> {
     String notebookId,
     int pageNumber,
     String templateType,
+    String backgroundColor,
+    double lineSpacing,
     String? thumbnailPath,
     DateTime createdAt,
     DateTime updatedAt,
@@ -77,6 +81,8 @@ class _$PageModelCopyWithImpl<$Res, $Val extends PageModel>
     Object? notebookId = null,
     Object? pageNumber = null,
     Object? templateType = null,
+    Object? backgroundColor = null,
+    Object? lineSpacing = null,
     Object? thumbnailPath = freezed,
     Object? createdAt = null,
     Object? updatedAt = null,
@@ -100,6 +106,14 @@ class _$PageModelCopyWithImpl<$Res, $Val extends PageModel>
                 ? _value.templateType
                 : templateType // ignore: cast_nullable_to_non_nullable
                       as String,
+            backgroundColor: null == backgroundColor
+                ? _value.backgroundColor
+                : backgroundColor // ignore: cast_nullable_to_non_nullable
+                      as String,
+            lineSpacing: null == lineSpacing
+                ? _value.lineSpacing
+                : lineSpacing // ignore: cast_nullable_to_non_nullable
+                      as double,
             thumbnailPath: freezed == thumbnailPath
                 ? _value.thumbnailPath
                 : thumbnailPath // ignore: cast_nullable_to_non_nullable
@@ -136,6 +150,8 @@ abstract class _$$PageModelImplCopyWith<$Res>
     String notebookId,
     int pageNumber,
     String templateType,
+    String backgroundColor,
+    double lineSpacing,
     String? thumbnailPath,
     DateTime createdAt,
     DateTime updatedAt,
@@ -161,6 +177,8 @@ class __$$PageModelImplCopyWithImpl<$Res>
     Object? notebookId = null,
     Object? pageNumber = null,
     Object? templateType = null,
+    Object? backgroundColor = null,
+    Object? lineSpacing = null,
     Object? thumbnailPath = freezed,
     Object? createdAt = null,
     Object? updatedAt = null,
@@ -184,6 +202,14 @@ class __$$PageModelImplCopyWithImpl<$Res>
             ? _value.templateType
             : templateType // ignore: cast_nullable_to_non_nullable
                   as String,
+        backgroundColor: null == backgroundColor
+            ? _value.backgroundColor
+            : backgroundColor // ignore: cast_nullable_to_non_nullable
+                  as String,
+        lineSpacing: null == lineSpacing
+            ? _value.lineSpacing
+            : lineSpacing // ignore: cast_nullable_to_non_nullable
+                  as double,
         thumbnailPath: freezed == thumbnailPath
             ? _value.thumbnailPath
             : thumbnailPath // ignore: cast_nullable_to_non_nullable
@@ -213,6 +239,8 @@ class _$PageModelImpl implements _PageModel {
     required this.notebookId,
     required this.pageNumber,
     this.templateType = 'blank',
+    this.backgroundColor = '#FFFFFF',
+    this.lineSpacing = 32.0,
     this.thumbnailPath,
     required this.createdAt,
     required this.updatedAt,
@@ -233,6 +261,12 @@ class _$PageModelImpl implements _PageModel {
   final String templateType;
   // 'blank' | 'lined' | 'grid' | 'dotted'
   @override
+  @JsonKey()
+  final String backgroundColor;
+  @override
+  @JsonKey()
+  final double lineSpacing;
+  @override
   final String? thumbnailPath;
   @override
   final DateTime createdAt;
@@ -244,7 +278,7 @@ class _$PageModelImpl implements _PageModel {
 
   @override
   String toString() {
-    return 'PageModel(id: $id, notebookId: $notebookId, pageNumber: $pageNumber, templateType: $templateType, thumbnailPath: $thumbnailPath, createdAt: $createdAt, updatedAt: $updatedAt, isSynced: $isSynced)';
+    return 'PageModel(id: $id, notebookId: $notebookId, pageNumber: $pageNumber, templateType: $templateType, backgroundColor: $backgroundColor, lineSpacing: $lineSpacing, thumbnailPath: $thumbnailPath, createdAt: $createdAt, updatedAt: $updatedAt, isSynced: $isSynced)';
   }
 
   @override
@@ -259,6 +293,10 @@ class _$PageModelImpl implements _PageModel {
                 other.pageNumber == pageNumber) &&
             (identical(other.templateType, templateType) ||
                 other.templateType == templateType) &&
+            (identical(other.backgroundColor, backgroundColor) ||
+                other.backgroundColor == backgroundColor) &&
+            (identical(other.lineSpacing, lineSpacing) ||
+                other.lineSpacing == lineSpacing) &&
             (identical(other.thumbnailPath, thumbnailPath) ||
                 other.thumbnailPath == thumbnailPath) &&
             (identical(other.createdAt, createdAt) ||
@@ -277,6 +315,8 @@ class _$PageModelImpl implements _PageModel {
     notebookId,
     pageNumber,
     templateType,
+    backgroundColor,
+    lineSpacing,
     thumbnailPath,
     createdAt,
     updatedAt,
@@ -303,6 +343,8 @@ abstract class _PageModel implements PageModel {
     required final String notebookId,
     required final int pageNumber,
     final String templateType,
+    final String backgroundColor,
+    final double lineSpacing,
     final String? thumbnailPath,
     required final DateTime createdAt,
     required final DateTime updatedAt,
@@ -320,6 +362,10 @@ abstract class _PageModel implements PageModel {
   int get pageNumber;
   @override
   String get templateType; // 'blank' | 'lined' | 'grid' | 'dotted'
+  @override
+  String get backgroundColor;
+  @override
+  double get lineSpacing;
   @override
   String? get thumbnailPath;
   @override

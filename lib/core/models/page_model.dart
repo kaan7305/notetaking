@@ -10,6 +10,8 @@ class PageModel with _$PageModel {
     required String notebookId,
     required int pageNumber,
     @Default('blank') String templateType, // 'blank' | 'lined' | 'grid' | 'dotted'
+    @Default('#FFFFFF') String backgroundColor,
+    @Default(32.0) double lineSpacing,
     String? thumbnailPath,
     required DateTime createdAt,
     required DateTime updatedAt,

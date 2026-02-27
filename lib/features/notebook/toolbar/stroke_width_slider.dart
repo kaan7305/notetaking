@@ -7,11 +7,15 @@ import 'package:study_notebook/core/utils/constants.dart';
 class StrokeWidthSlider extends StatelessWidget {
   final double value;
   final ValueChanged<double> onChanged;
+  final double min;
+  final double max;
 
   const StrokeWidthSlider({
     super.key,
     required this.value,
     required this.onChanged,
+    this.min = 1.0,
+    this.max = 30.0,
   });
 
   @override
@@ -39,9 +43,9 @@ class StrokeWidthSlider extends StatelessWidget {
           ),
           Expanded(
             child: Slider(
-              value: value,
-              min: 1.0,
-              max: 30.0,
+              value: value.clamp(min, max),
+              min: min,
+              max: max,
               onChanged: onChanged,
               activeColor: AppColors.primary,
             ),

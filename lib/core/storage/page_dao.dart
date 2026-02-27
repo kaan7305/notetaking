@@ -18,6 +18,8 @@ class PageDao {
         'notebook_id': page.notebookId,
         'page_number': page.pageNumber,
         'template_type': page.templateType,
+        'background_color': page.backgroundColor,
+        'line_spacing': page.lineSpacing,
         'thumbnail_path': page.thumbnailPath,
         'created_at': page.createdAt.millisecondsSinceEpoch,
         'updated_at': page.updatedAt.millisecondsSinceEpoch,
@@ -29,6 +31,8 @@ class PageDao {
         notebookId: map['notebook_id'] as String,
         pageNumber: map['page_number'] as int,
         templateType: map['template_type'] as String? ?? 'blank',
+        backgroundColor: map['background_color'] as String? ?? '#FFFFFF',
+        lineSpacing: (map['line_spacing'] as num?)?.toDouble() ?? 32.0,
         thumbnailPath: map['thumbnail_path'] as String?,
         createdAt:
             DateTime.fromMillisecondsSinceEpoch(map['created_at'] as int),

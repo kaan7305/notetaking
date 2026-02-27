@@ -5,6 +5,9 @@ import 'package:study_notebook/app/colors.dart';
 import 'package:study_notebook/core/models/models.dart';
 import 'package:study_notebook/core/providers/page_provider.dart';
 import 'package:study_notebook/core/utils/constants.dart';
+import 'package:study_notebook/features/notebook/canvas/canvas_notifier.dart';
+import 'package:study_notebook/features/notebook/canvas/page_background_painter.dart';
+import 'package:study_notebook/features/notebook/canvas/stroke_painter.dart';
 
 /// A side panel showing page thumbnails for the current notebook.
 class PageSidebar extends ConsumerWidget {
@@ -114,7 +117,7 @@ class PageSidebar extends ConsumerWidget {
   }
 }
 
-class _PageThumbnail extends StatelessWidget {
+class _PageThumbnail extends ConsumerWidget {
   final PageModel page;
   final bool isSelected;
   final VoidCallback onTap;
@@ -128,8 +131,9 @@ class _PageThumbnail extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final canvasState = ref.watch(canvasProvider(page.id));
 
     return GestureDetector(
       onTap: onTap,
@@ -148,21 +152,43 @@ class _PageThumbnail extends StatelessWidget {
         ),
         child: Column(
           children: [
-            // Thumbnail area.
+            // Thumbnail area — renders actual strokes scaled down.
             AspectRatio(
-              aspectRatio: 0.75,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.grey.shade700 : Colors.white,
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(5)),
-                ),
-                child: Center(
-                  child: Text(
-                    _templateIcon(page.templateType),
-                    style: TextStyle(
-                      fontSize: 24,
-                      color: Colors.grey.shade400,
+              aspectRatio: AppDimensions.letterWidth / AppDimensions.letterHeight,
+              child: ClipRRect(
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(5)),
+                child: FittedBox(
+                  fit: BoxFit.contain,
+                  alignment: Alignment.topLeft,
+                  child: SizedBox(
+                    width: AppDimensions.letterWidth,
+                    height: AppDimensions.letterHeight,
+                    child: Stack(
+                      children: [
+                        // Background color.
+                        Container(color: _hexToColor(page.backgroundColor)),
+                        // Template lines.
+                        CustomPaint(
+                          size: Size(
+                              AppDimensions.letterWidth,
+                              AppDimensions.letterHeight),
+                          painter: PageBackgroundPainter(
+                            templateType: page.templateType,
+                            lineSpacing: page.lineSpacing,
+                          ),
+                        ),
+                        // Strokes.
+                        CustomPaint(
+                          size: Size(
+                              AppDimensions.letterWidth,
+                              AppDimensions.letterHeight),
+                          painter: StrokePainter(
+                            strokes: canvasState.strokes,
+                            activeStroke: canvasState.activeStroke,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -186,17 +212,10 @@ class _PageThumbnail extends StatelessWidget {
     );
   }
 
-  String _templateIcon(String template) {
-    switch (template) {
-      case 'lined':
-        return '≡';
-      case 'grid':
-        return '⊞';
-      case 'dotted':
-        return '⋯';
-      default:
-        return '';
-    }
+  Color _hexToColor(String hex) {
+    hex = hex.replaceFirst('#', '');
+    if (hex.length == 6) hex = 'FF$hex';
+    return Color(int.parse(hex, radix: 16));
   }
 
   void _showContextMenu(BuildContext context) {

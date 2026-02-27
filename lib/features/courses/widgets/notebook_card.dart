@@ -7,11 +7,97 @@ import 'package:study_notebook/app/colors.dart';
 import 'package:study_notebook/app/route_names.dart';
 import 'package:study_notebook/core/models/notebook.dart';
 import 'package:study_notebook/core/providers/notebook_provider.dart';
+import 'package:study_notebook/core/providers/page_provider.dart';
 import 'package:study_notebook/core/utils/constants.dart';
+import 'package:study_notebook/features/notebook/canvas/canvas_notifier.dart';
+import 'package:study_notebook/features/notebook/canvas/page_background_painter.dart';
+import 'package:study_notebook/features/notebook/canvas/stroke_painter.dart';
+
+/// Renders the first-page preview for a notebook card.
+class _NotebookThumbnail extends ConsumerWidget {
+  final String notebookId;
+  final bool isFavorite;
+
+  const _NotebookThumbnail({
+    required this.notebookId,
+    required this.isFavorite,
+  });
+
+  Color _hexToColor(String hex) {
+    hex = hex.replaceFirst('#', '');
+    if (hex.length == 6) hex = 'FF$hex';
+    return Color(int.parse(hex, radix: 16));
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pagesAsync = ref.watch(pageProvider(notebookId));
+
+    return pagesAsync.when(
+      loading: () => Container(color: Colors.grey.shade100),
+      error: (_, __) => Container(color: Colors.grey.shade100),
+      data: (pages) {
+        if (pages.isEmpty) {
+          return Container(
+            color: Colors.grey.shade100,
+            child: Center(
+              child: Icon(
+                Icons.description_outlined,
+                size: 40,
+                color: Colors.grey.shade300,
+              ),
+            ),
+          );
+        }
+
+        final firstPage = pages.first;
+        final canvasState = ref.watch(canvasProvider(firstPage.id));
+
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            // Page background color.
+            Container(color: _hexToColor(firstPage.backgroundColor)),
+            // Template lines.
+            CustomPaint(
+              painter: PageBackgroundPainter(
+                templateType: firstPage.templateType,
+                lineSpacing: firstPage.lineSpacing,
+              ),
+            ),
+            // Strokes (scaled down to fit the card).
+            FittedBox(
+              fit: BoxFit.cover,
+              alignment: Alignment.topLeft,
+              child: SizedBox(
+                width: AppDimensions.letterWidth,
+                height: AppDimensions.letterHeight,
+                child: CustomPaint(
+                  painter: StrokePainter(strokes: canvasState.strokes),
+                ),
+              ),
+            ),
+            // Favourite star overlay.
+            if (isFavorite)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Icon(
+                  Icons.star_rounded,
+                  color: Colors.amber.shade600,
+                  size: 22,
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
 
 /// A grid card representing a single [Notebook].
 ///
-/// Shows a placeholder thumbnail, the notebook title, and the last-modified
+/// Shows a thumbnail preview, the notebook title, and the last-modified
 /// date. A star icon overlay appears when the notebook is favourited.
 /// Long-press reveals rename / favourite / delete options.
 class NotebookCard extends ConsumerWidget {
@@ -172,31 +258,9 @@ class NotebookCard extends ConsumerWidget {
           children: [
             // Thumbnail area
             Expanded(
-              child: Stack(
-                children: [
-                  // Placeholder background
-                  Container(
-                    color: Colors.grey.shade100,
-                    child: Center(
-                      child: Icon(
-                        Icons.description_outlined,
-                        size: 40,
-                        color: Colors.grey.shade300,
-                      ),
-                    ),
-                  ),
-                  // Favourite star overlay
-                  if (notebook.isFavorite)
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Icon(
-                        Icons.star_rounded,
-                        color: Colors.amber.shade600,
-                        size: 22,
-                      ),
-                    ),
-                ],
+              child: _NotebookThumbnail(
+                notebookId: notebook.id,
+                isFavorite: notebook.isFavorite,
               ),
             ),
 

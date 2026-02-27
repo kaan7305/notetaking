@@ -26,9 +26,8 @@ class PageNotifier extends StateNotifier<AsyncValue<List<PageModel>>> {
     }
   }
 
-  /// Adds a new page at the end of the notebook.
-  Future<Result<PageModel>> addPage({String templateType = 'blank'}) async {
-    // Determine the next page number.
+  /// Adds a new page at the end of the notebook, inheriting settings from the last page.
+  Future<Result<PageModel>> addPage() async {
     final maxResult = await _dao.getMaxPageNumber(_notebookId);
     final int nextNumber;
     switch (maxResult) {
@@ -38,12 +37,18 @@ class PageNotifier extends StateNotifier<AsyncValue<List<PageModel>>> {
         return Failure(msg, err);
     }
 
+    // Inherit template/color/spacing from the last page in memory.
+    final existing = state.valueOrNull ?? [];
+    final last = existing.isNotEmpty ? existing.last : null;
+
     final now = DateTime.now();
     final page = PageModel(
       id: const Uuid().v4(),
       notebookId: _notebookId,
       pageNumber: nextNumber,
-      templateType: templateType,
+      templateType: last?.templateType ?? 'blank',
+      backgroundColor: last?.backgroundColor ?? '#FFFFFF',
+      lineSpacing: last?.lineSpacing ?? 32.0,
       createdAt: now,
       updatedAt: now,
     );

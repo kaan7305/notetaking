@@ -13,6 +13,7 @@ import 'canvas_state.dart';
 /// Manages all drawing state for a single page.
 class CanvasNotifier extends StateNotifier<CanvasState> {
   final StrokeDao _strokeDao;
+  final TextElementDao _textDao;
   final String pageId;
   Timer? _autoSaveTimer;
   bool _needsSave = false;
@@ -20,27 +21,36 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
   CanvasNotifier({
     required this.pageId,
     StrokeDao? strokeDao,
+    TextElementDao? textDao,
   })  : _strokeDao = strokeDao ?? StrokeDao(),
+        _textDao = textDao ?? TextElementDao(),
         super(const CanvasState()) {
-    _loadStrokes();
+    _loadAll();
   }
 
   // ─────────────── Loading ───────────────
 
-  Future<void> _loadStrokes() async {
-    final result = await _strokeDao.getByPageId(pageId);
-    switch (result) {
-      case Success(data: final strokes):
-        state = state.copyWith(strokes: strokes);
-      case Failure():
-        break;
-    }
+  Future<void> _loadAll() async {
+    final strokeResult = await _strokeDao.getByPageId(pageId);
+    final textResult = await _textDao.getByPageId(pageId);
+
+    final strokes = strokeResult is Success<List<Stroke>>
+        ? strokeResult.data
+        : <Stroke>[];
+    final texts = textResult is Success<List<TextElement>>
+        ? textResult.data
+        : <TextElement>[];
+
+    state = state.copyWith(strokes: strokes, textElements: texts);
   }
 
   // ─────────────── Tool selection ───────────────
 
   void selectTool(ToolType tool) {
-    state = state.copyWith(currentTool: tool);
+    state = state.copyWith(
+      currentTool: tool,
+      selectedStrokeId: () => null,
+    );
   }
 
   void selectColor(Color color) {
@@ -55,9 +65,25 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
     state = state.copyWith(highlighterWidth: width);
   }
 
+  void setEraserRadius(double radius) {
+    state = state.copyWith(eraserRadius: radius.clamp(5.0, 80.0));
+  }
+
+  void onHover(Offset position) {
+    state = state.copyWith(hoverPosition: () => position);
+  }
+
+  void onHoverExit() {
+    state = state.copyWith(hoverPosition: () => null);
+  }
+
   // ─────────────── Drawing ───────────────
 
   void onPointerDown(Offset position, double pressure) {
+    if (state.currentTool == ToolType.pointer) {
+      _hitTestStroke(position);
+      return;
+    }
     if (state.currentTool == ToolType.eraser) {
       _eraseAt(position);
       return;
@@ -144,7 +170,7 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
   // ─────────────── Eraser ───────────────
 
   void _eraseAt(Offset position) {
-    final hitRadius = 15.0;
+    final hitRadius = state.eraserRadius;
     final toRemove = <String>[];
 
     for (final stroke in state.strokes) {
@@ -165,6 +191,42 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
       state = state.copyWith(strokes: newStrokes, redoStack: []);
       _markDirty();
     }
+  }
+
+  // ─────────────── Pointer / Select ───────────────
+
+  void _hitTestStroke(Offset position) {
+    String? bestId;
+    double bestDist = double.infinity;
+    const threshold = 20.0 * 20.0;
+
+    for (final stroke in state.strokes) {
+      for (final point in stroke.points) {
+        final dx = point.x - position.dx;
+        final dy = point.y - position.dy;
+        final dist = dx * dx + dy * dy;
+        if (dist < bestDist) {
+          bestDist = dist;
+          bestId = stroke.id;
+        }
+      }
+    }
+
+    final newId = bestDist <= threshold ? bestId : null;
+    state = state.copyWith(selectedStrokeId: () => newId);
+  }
+
+  void deleteSelectedStroke() {
+    final id = state.selectedStrokeId;
+    if (id == null) return;
+    _pushUndoState();
+    final newStrokes = state.strokes.where((s) => s.id != id).toList();
+    state = state.copyWith(
+      strokes: newStrokes,
+      selectedStrokeId: () => null,
+      redoStack: [],
+    );
+    _markDirty();
   }
 
   // ─────────────── Undo / Redo ───────────────
@@ -222,6 +284,35 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
     _markDirty();
   }
 
+  // ─────────────── Text elements ───────────────
+
+  void addTextElement(TextElement element) {
+    final updated = [...state.textElements, element];
+    state = state.copyWith(
+      textElements: updated,
+      activeTextId: () => element.id,
+    );
+    _markDirty();
+  }
+
+  void updateTextElement(TextElement element) {
+    final updated = state.textElements
+        .map((e) => e.id == element.id ? element : e)
+        .toList();
+    state = state.copyWith(textElements: updated);
+    _markDirty();
+  }
+
+  void deleteTextElement(String id) {
+    final updated = state.textElements.where((e) => e.id != id).toList();
+    state = state.copyWith(textElements: updated, activeTextId: () => null);
+    _markDirty();
+  }
+
+  void setActiveText(String? id) {
+    state = state.copyWith(activeTextId: () => id);
+  }
+
   // ─────────────── Zoom / Pan ───────────────
 
   void setZoom(double zoom) {
@@ -252,10 +343,14 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
     if (!_needsSave) return;
     _needsSave = false;
 
-    // Delete all existing strokes for this page, then re-insert current ones.
     await _strokeDao.deleteByPageId(pageId);
     if (state.strokes.isNotEmpty) {
       await _strokeDao.insertBatch(state.strokes);
+    }
+
+    await _textDao.deleteByPageId(pageId);
+    if (state.textElements.isNotEmpty) {
+      await _textDao.insertBatch(state.textElements);
     }
   }
 

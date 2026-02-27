@@ -133,6 +133,12 @@ class _CanvasArea extends ConsumerStatefulWidget {
 class _CanvasAreaState extends ConsumerState<_CanvasArea> {
   final _transformController = TransformationController();
 
+  Color _hexToColor(String hex) {
+    hex = hex.replaceFirst('#', '');
+    if (hex.length == 6) hex = 'FF$hex';
+    return Color(int.parse(hex, radix: 16));
+  }
+
   @override
   void dispose() {
     _transformController.dispose();
@@ -142,6 +148,10 @@ class _CanvasAreaState extends ConsumerState<_CanvasArea> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final canvasState = ref.watch(canvasProvider(widget.page.id));
+    final isDrawingTool = canvasState.currentTool == ToolType.pen ||
+        canvasState.currentTool == ToolType.highlighter ||
+        canvasState.currentTool == ToolType.eraser;
 
     // Use letter size by default; could be made configurable per notebook.
     const pageSize = Size(
@@ -154,6 +164,8 @@ class _CanvasAreaState extends ConsumerState<_CanvasArea> {
       minScale: AppDimensions.canvasMinZoom,
       maxScale: AppDimensions.canvasMaxZoom,
       boundaryMargin: const EdgeInsets.all(100),
+      panEnabled: !isDrawingTool,
+      scaleEnabled: !isDrawingTool,
       child: Center(
         child: Container(
           width: pageSize.width,
@@ -161,7 +173,7 @@ class _CanvasAreaState extends ConsumerState<_CanvasArea> {
           decoration: BoxDecoration(
             color: isDark
                 ? AppColors.canvasBackgroundDark
-                : AppColors.canvasBackground,
+                : _hexToColor(widget.page.backgroundColor),
             boxShadow: [
               BoxShadow(
                 color: AppColors.pageShadow,
@@ -174,6 +186,8 @@ class _CanvasAreaState extends ConsumerState<_CanvasArea> {
             pageId: widget.page.id,
             templateType: widget.page.templateType,
             pageSize: pageSize,
+            backgroundColor: _hexToColor(widget.page.backgroundColor),
+            lineSpacing: widget.page.lineSpacing,
           ),
         ),
       ),
