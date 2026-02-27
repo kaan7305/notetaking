@@ -12,9 +12,9 @@ import 'app/theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Use the FFI-web database factory on web so sqflite works in the browser.
+  // Use the no-web-worker variant on web so sqflite works without extra setup.
   if (kIsWeb) {
-    databaseFactory = databaseFactoryFfiWeb;
+    databaseFactory = databaseFactoryFfiWebNoWebWorker;
   }
 
   await Supabase.initialize(
