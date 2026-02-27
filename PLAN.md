@@ -25,9 +25,9 @@
 - [x] 5.5 Source reference display with page links
 
 ## Phase 6: Lecture Capture
-- [ ] 6.1 Audio recorder UI
-- [ ] 6.2 Transcription API integration
-- [ ] 6.3 Structured notes generator
+- [x] 6.1 Audio recorder UI
+- [x] 6.2 Transcription API integration
+- [x] 6.3 Structured notes generator
 
 ## Phase 7: Review & Study Tools
 - [ ] 7.1 Flashcard generation + review UI

@@ -9,6 +9,7 @@ import '../features/auth/signup_screen.dart';
 import '../features/courses/course_detail_screen.dart';
 import '../features/courses/library_screen.dart';
 import '../features/documents/viewer/document_viewer_screen.dart';
+import '../features/lecture_capture/lecture_capture_screen.dart';
 import '../features/notebook/notebook_screen.dart';
 import 'route_names.dart';
 
@@ -97,6 +98,14 @@ final routerProvider = Provider<GoRouter>((ref) {
                 documentId: documentId,
                 initialPage: page,
               );
+            },
+          ),
+          GoRoute(
+            path: 'lecture',
+            name: RouteNames.lectureCapture,
+            builder: (context, state) {
+              final courseId = state.pathParameters['courseId']!;
+              return LectureCaptureScreen(courseId: courseId);
             },
           ),
         ],
