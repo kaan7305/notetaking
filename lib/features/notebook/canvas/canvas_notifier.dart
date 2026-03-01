@@ -294,7 +294,7 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
 
   void _updateSelection(Offset position) {
     if (state.selectionMode == SelectionMode.freeform) {
-      final points = [...(state.selectionLassoPoints ?? []), position];
+      final points = <Offset>[...(state.selectionLassoPoints ?? []), position];
       state = state.copyWith(selectionLassoPoints: () => points);
     } else {
       final startPoint = state.selectionRect?.topLeft ?? position;
