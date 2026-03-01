@@ -3,6 +3,10 @@
 ## In Progress
 - (none)
 
+## Completed (cycle 22 — analyzer clean-up)
+- [x] 2026-03-01: Fix `sync_provider.dart` — missing `models.dart` import caused `Success`/`Failure` to be undefined (15 errors); added import and removed all now-unnecessary explicit type casts on strongly-typed `freezed` model properties by using `is! Success<T>` with explicit type parameters
+- [x] 2026-03-01: Fix `lecture_capture_screen.dart` — `notesGeneratorProvider` is a family provider and was already correctly used with `(widget.courseId)` (fixed in a prior cycle; analyzer errors were stale)
+
 ## Completed (cycle 20)
 - [x] 2026-03-01: Persist practice questions to SQLite between sessions — `PracticeQuestionDao` + schema v7 migration; `PracticeNotifier` loads history on init and persists after each `generateQuestions()`; `QuizScreen` shows a spinner while history loads; `isLoadingHistory` added to `PracticeState`
 - [x] 2026-03-01: Add JSON parse safety to `flashcard_provider` and `practice_provider` — each raw JSON element wrapped in try/catch; `sourcePage` cast changed to `(as num?)?.toInt()` to handle JSON doubles

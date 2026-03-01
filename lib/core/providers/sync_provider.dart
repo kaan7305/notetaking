@@ -161,8 +161,8 @@ class SyncNotifier extends StateNotifier<SyncState> {
 
   Future<void> _syncCourses() async {
     final result = await _courseDao.getUnsynced();
-    if (result is! Success) return;
-    final courses = result.data as List;
+    if (result is! Success<List<Course>>) return;
+    final courses = result.data;
     if (courses.isEmpty) return;
 
     final rows = courses
@@ -172,22 +172,22 @@ class SyncNotifier extends StateNotifier<SyncState> {
               'name': c.name,
               if (c.description != null) 'description': c.description,
               if (c.color != null) 'color': c.color,
-              'created_at': (c.createdAt as DateTime).toUtc().toIso8601String(),
-              'updated_at': (c.updatedAt as DateTime).toUtc().toIso8601String(),
+              'created_at': c.createdAt.toUtc().toIso8601String(),
+              'updated_at': c.updatedAt.toUtc().toIso8601String(),
             })
         .toList();
 
     await _supabase.from('courses').upsert(rows);
 
     for (final c in courses) {
-      await _courseDao.markSynced(c.id as String);
+      await _courseDao.markSynced(c.id);
     }
   }
 
   Future<void> _syncNotebooks() async {
     final result = await _notebookDao.getUnsynced();
-    if (result is! Success) return;
-    final notebooks = result.data as List;
+    if (result is! Success<List<Notebook>>) return;
+    final notebooks = result.data;
     if (notebooks.isEmpty) return;
 
     final rows = notebooks
@@ -197,49 +197,49 @@ class SyncNotifier extends StateNotifier<SyncState> {
               'user_id': n.userId,
               'title': n.title,
               'page_size': n.pageSize,
-              'created_at': (n.createdAt as DateTime).toUtc().toIso8601String(),
-              'updated_at': (n.updatedAt as DateTime).toUtc().toIso8601String(),
-              'is_favorite': n.isFavorite as bool,
+              'created_at': n.createdAt.toUtc().toIso8601String(),
+              'updated_at': n.updatedAt.toUtc().toIso8601String(),
+              'is_favorite': n.isFavorite,
             })
         .toList();
 
     await _supabase.from('notebooks').upsert(rows);
 
     for (final n in notebooks) {
-      await _notebookDao.markSynced(n.id as String);
+      await _notebookDao.markSynced(n.id);
     }
   }
 
   Future<void> _syncPages() async {
     final result = await _pageDao.getUnsynced();
-    if (result is! Success) return;
-    final pages = result.data as List;
+    if (result is! Success<List<PageModel>>) return;
+    final pages = result.data;
     if (pages.isEmpty) return;
 
     final rows = pages
         .map((p) => {
               'id': p.id,
               'notebook_id': p.notebookId,
-              'page_number': p.pageNumber as int,
+              'page_number': p.pageNumber,
               'template_type': p.templateType,
               'background_color': p.backgroundColor,
-              'line_spacing': p.lineSpacing as double,
-              'created_at': (p.createdAt as DateTime).toUtc().toIso8601String(),
-              'updated_at': (p.updatedAt as DateTime).toUtc().toIso8601String(),
+              'line_spacing': p.lineSpacing,
+              'created_at': p.createdAt.toUtc().toIso8601String(),
+              'updated_at': p.updatedAt.toUtc().toIso8601String(),
             })
         .toList();
 
     await _supabase.from('pages').upsert(rows);
 
     for (final p in pages) {
-      await _pageDao.markSynced(p.id as String);
+      await _pageDao.markSynced(p.id);
     }
   }
 
   Future<void> _syncDocuments() async {
     final result = await _documentDao.getUnsynced();
-    if (result is! Success) return;
-    final documents = result.data as List;
+    if (result is! Success<List<Document>>) return;
+    final documents = result.data;
     if (documents.isEmpty) return;
 
     // Only sync documents that have been successfully uploaded to Storage.
@@ -253,9 +253,9 @@ class SyncNotifier extends StateNotifier<SyncState> {
                 'user_id': d.userId,
                 'file_name': d.fileName,
                 'storage_path': d.storagePath,
-                'page_count': d.pageCount as int,
+                'page_count': d.pageCount,
                 'status': d.status,
-                'created_at': (d.createdAt as DateTime).toUtc().toIso8601String(),
+                'created_at': d.createdAt.toUtc().toIso8601String(),
               })
           .toList();
 
@@ -265,7 +265,7 @@ class SyncNotifier extends StateNotifier<SyncState> {
     // Mark all (including non-ready) as locally processed so we don't retry
     // infinitely for documents stuck in an error/uploading state.
     for (final d in documents) {
-      await _documentDao.markSynced(d.id as String);
+      await _documentDao.markSynced(d.id);
     }
   }
 }
