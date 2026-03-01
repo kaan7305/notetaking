@@ -24,7 +24,7 @@
 - [x] 2026-03-01: Database schema versioning / migration strategy
 
 ## Low Priority / Polish
-- [ ] Animate selection action menu (fade in/out)
+- [x] 2026-03-01: Animate selection action menu (fade in/out)
 - [ ] Selection bounds indicator (dashed rect around selected content)
 - [ ] Pencil cursor on iPad vs mouse cursor on desktop differentiation
 - [ ] Text box: multi-line height calculation for accurate hit testing

@@ -1,4 +1,16 @@
 
+## 2026-03-01 (cycle 14)
+
+### Added
+- **Animated selection action menu**: The floating "N selected / delete" pill that appears above lasso/box selections now fades and scales in/out instead of appearing instantaneously. `_SelectionActionMenu` was converted from a `StatelessWidget` to a `StatefulWidget` (`_SelectionActionMenuState`) with a 180 ms `AnimationController`. `FadeTransition` handles opacity and `ScaleTransition` (0.88 → 1.0, anchored at `Alignment.bottomCenter`) handles the pop-in effect. The widget is always kept in the `Stack` (rather than conditionally added/removed) so the exit animation can play; the last valid `selectionBounds` are cached in `_lastKnownBounds` so the menu fades out at its original position even after the canvas state clears the selection. `IgnorePointer` blocks ghost-clicks while the menu is invisible or fading out.
+
+### Fixed
+- **`connectivityStreamProvider` now emits the initial connection state**: On Android, `Connectivity().onConnectivityChanged` does not emit the current state at subscription time, so the offline banner would stay hidden until the next network change. Fixed by converting the provider to an `async*` generator that calls `checkConnectivity()` first and then `yield*`s the change stream — ensuring the banner is correct from the first frame.
+
+### Chores
+- Exported `connectivity_provider.dart` from the `providers.dart` barrel file.
+- Marked "Connection/offline status indicator" and "Database schema versioning / migration strategy" done in `TODO.md` (implementations existed from prior cycles but were not reflected in the backlog).
+
 ## 2026-03-01 (cycle 13)
 
 ### Added

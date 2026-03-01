@@ -254,18 +254,19 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
                             .updateTextElement(el.copyWith(x: x, y: y))
                         : null,
                   ),
-                // Floating selection action menu.
-                if (canvasState.hasSelection && !canvasState.isSelecting)
-                  _SelectionActionMenu(
-                    selectedCount: canvasState.selectedStrokeIds.length +
-                        canvasState.selectedTextIds.length,
-                    selectionBounds: _computeSelectionBounds(canvasState),
-                    onDelete: () {
-                      ref
-                          .read(canvasProvider(widget.pageId).notifier)
-                          .deleteSelectedStrokes();
-                    },
-                  ),
+                // Floating selection action menu — always in tree so it can
+                // animate in/out smoothly via FadeTransition + ScaleTransition.
+                _SelectionActionMenu(
+                  isVisible: canvasState.hasSelection && !canvasState.isSelecting,
+                  selectedCount: canvasState.selectedStrokeIds.length +
+                      canvasState.selectedTextIds.length,
+                  selectionBounds: _computeSelectionBounds(canvasState),
+                  onDelete: () {
+                    ref
+                        .read(canvasProvider(widget.pageId).notifier)
+                        .deleteSelectedStrokes();
+                  },
+                ),
                 // Cursor preview overlay.
                 if (_hoverPosition != null &&
                     canvasState.currentTool != ToolType.text)
@@ -449,105 +450,183 @@ class _LoadErrorBanner extends StatelessWidget {
 }
 
 /// Floating action menu shown above selected strokes.
-class _SelectionActionMenu extends StatelessWidget {
+///
+/// Always present in the [Stack] so it can animate in and out smoothly via
+/// [FadeTransition] + [ScaleTransition]. The last valid bounds are cached so
+/// the menu fades out at its original position even after the selection clears.
+class _SelectionActionMenu extends StatefulWidget {
+  final bool isVisible;
   final int selectedCount;
   final Rect selectionBounds;
   final VoidCallback onDelete;
 
   const _SelectionActionMenu({
+    required this.isVisible,
     required this.selectedCount,
     required this.selectionBounds,
     required this.onDelete,
   });
 
   @override
+  State<_SelectionActionMenu> createState() => _SelectionActionMenuState();
+}
+
+class _SelectionActionMenuState extends State<_SelectionActionMenu>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _fadeCurve;
+  late final Animation<double> _scaleCurve;
+
+  /// The most recent non-empty bounds — used for position while fading out.
+  Rect _lastKnownBounds = Rect.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 180),
+      value: widget.isVisible ? 1.0 : 0.0,
+    );
+    final curved = CurvedAnimation(
+      parent: _ctrl,
+      curve: Curves.easeOut,
+      reverseCurve: Curves.easeIn,
+    );
+    _fadeCurve = curved;
+    _scaleCurve = Tween<double>(begin: 0.88, end: 1.0).animate(curved);
+
+    if (!widget.selectionBounds.isEmpty) {
+      _lastKnownBounds = widget.selectionBounds;
+    }
+  }
+
+  @override
+  void didUpdateWidget(_SelectionActionMenu old) {
+    super.didUpdateWidget(old);
+    // Cache bounds before selection clears so we fade out at the right spot.
+    if (!widget.selectionBounds.isEmpty) {
+      _lastKnownBounds = widget.selectionBounds;
+    }
+    if (widget.isVisible && !old.isVisible) {
+      _ctrl.forward();
+    } else if (!widget.isVisible && old.isVisible) {
+      _ctrl.reverse();
+    }
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // Nothing to show yet (menu has never been visible).
+    if (_lastKnownBounds.isEmpty) {
+      return const Positioned(left: 0, top: 0, child: SizedBox.shrink());
+    }
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final menuY = (selectionBounds.top - 54).clamp(0.0, double.infinity);
-    final menuX = (selectionBounds.center.dx - 70).clamp(0.0, double.infinity);
+    final menuY = (_lastKnownBounds.top - 54).clamp(0.0, double.infinity);
+    final menuX =
+        (_lastKnownBounds.center.dx - 70).clamp(0.0, double.infinity);
 
     return Positioned(
       left: menuX,
       top: menuY,
-      child: Material(
-        elevation: 0,
-        color: Colors.transparent,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.cardDark : AppColors.cardLight,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isDark
-                  ? AppColors.cardBorderDark
-                  : AppColors.cardBorderLight,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.12),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 4,
-                offset: const Offset(0, 1),
-              ),
-            ],
+      child: FadeTransition(
+        opacity: _fadeCurve,
+        child: ScaleTransition(
+          scale: _scaleCurve,
+          alignment: Alignment.bottomCenter,
+          child: IgnorePointer(
+            // Block taps when invisible so the ghost menu doesn't eat gestures.
+            ignoring: !widget.isVisible,
+            child: _buildContent(isDark),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  '$selectedCount',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
-                  ),
-                ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContent(bool isDark) {
+    return Material(
+      elevation: 0,
+      color: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.cardDark : AppColors.cardLight,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color:
+                isDark ? AppColors.cardBorderDark : AppColors.cardBorderLight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.12),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(6),
               ),
-              const SizedBox(width: 6),
-              Text(
-                'selected',
+              child: Text(
+                '${widget.selectedCount}',
                 style: TextStyle(
                   fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: isDark
-                      ? AppColors.onSurfaceDark.withValues(alpha: 0.6)
-                      : AppColors.onSurfaceLight.withValues(alpha: 0.5),
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
                 ),
               ),
-              const SizedBox(width: 8),
-              Container(
-                width: 1,
-                height: 16,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              'selected',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
                 color: isDark
-                    ? AppColors.cardBorderDark
-                    : AppColors.cardBorderLight,
+                    ? AppColors.onSurfaceDark.withValues(alpha: 0.6)
+                    : AppColors.onSurfaceLight.withValues(alpha: 0.5),
               ),
-              const SizedBox(width: 4),
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: onDelete,
-                  borderRadius: BorderRadius.circular(8),
-                  child: Padding(
-                    padding: const EdgeInsets.all(6),
-                    child: Icon(Icons.delete_outline_rounded,
-                        size: 18, color: AppColors.error),
-                  ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              width: 1,
+              height: 16,
+              color:
+                  isDark ? AppColors.cardBorderDark : AppColors.cardBorderLight,
+            ),
+            const SizedBox(width: 4),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: widget.onDelete,
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.all(6),
+                  child: Icon(Icons.delete_outline_rounded,
+                      size: 18, color: AppColors.error),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
