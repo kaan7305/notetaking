@@ -205,4 +205,84 @@ void main() {
           closeTo(originalX, 0.001));
     });
   });
+
+  group('CanvasNotifier text element undo/redo', () {
+    TextElement makeText({String id = 'txt-1', String content = 'Hello'}) =>
+        TextElement(
+          id: id,
+          pageId: 'test-page',
+          content: content,
+          x: 50,
+          y: 50,
+          width: 200,
+          fontSize: 16,
+          fontFamily: 'system',
+          color: '#FF000000',
+          createdAt: DateTime.now(),
+        );
+
+    test('undo after addTextElement removes the element', () async {
+      final notifier = makeNotifier();
+      await pump();
+
+      notifier.addTextElement(makeText());
+      expect(notifier.state.textElements, hasLength(1));
+
+      notifier.undo();
+      expect(notifier.state.textElements, isEmpty);
+    });
+
+    test('undo after deleteTextElement restores the element', () async {
+      final notifier = makeNotifier();
+      await pump();
+
+      notifier.addTextElement(makeText());
+      // Clear the undo from add so we can isolate the delete undo.
+      notifier.addTextElement(makeText(id: 'txt-2', content: 'World'));
+      // Undo the second add, leaving only txt-1.
+      notifier.undo();
+      expect(notifier.state.textElements, hasLength(1));
+
+      notifier.deleteTextElement('txt-1');
+      expect(notifier.state.textElements, isEmpty);
+
+      notifier.undo();
+      expect(notifier.state.textElements, hasLength(1));
+      expect(notifier.state.textElements.first.id, 'txt-1');
+    });
+
+    test('undo after setActiveText + updateTextElement reverts content',
+        () async {
+      final notifier = makeNotifier();
+      await pump();
+
+      // Add a text element (pushes undo #1).
+      notifier.addTextElement(makeText(content: 'Original'));
+      // Undo the add, then redo to get it back — just to clear redo stack.
+      // Actually, let's use it directly. Activate to start editing (pushes undo #2).
+      notifier.setActiveText('txt-1');
+      // Simulate typing.
+      notifier.updateTextElement(makeText(content: 'Changed'));
+      notifier.setActiveText(null);
+
+      expect(notifier.state.textElements.first.content, 'Changed');
+
+      // One undo step should revert to 'Original' (the snapshot taken when
+      // setActiveText was called).
+      notifier.undo();
+      expect(notifier.state.textElements.first.content, 'Original');
+    });
+
+    test('redo after undo of addTextElement restores element', () async {
+      final notifier = makeNotifier();
+      await pump();
+
+      notifier.addTextElement(makeText());
+      notifier.undo();
+      expect(notifier.state.textElements, isEmpty);
+
+      notifier.redo();
+      expect(notifier.state.textElements, hasLength(1));
+    });
+  });
 }
