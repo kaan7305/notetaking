@@ -43,6 +43,9 @@
 - [x] 2026-03-01: Add analytics / error logging
 
 ## Completed
+- [x] 2026-03-01: Fix clearPage() to also clear text elements (was strokes-only — bug)
+- [x] 2026-03-01: Fix deactivate() save guard (now saves first page even when _selectedPageId is null)
+- [x] 2026-03-01: Defensive hex parsing in _PageThumbnail (page_sidebar.dart — same try/catch as notebook_screen.dart)
 - [x] 2026-03-01: All PLAN.md phases 1–8 implemented
 - [x] 2026-03-01: Drag-to-move for selected strokes and text elements
 - [x] 2026-03-01: Fix undo/redo to track text element changes (now saves both strokes + text in stack)

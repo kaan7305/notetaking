@@ -1,4 +1,14 @@
 
+## 2026-03-01 (cycle 15 — bug fixes)
+
+### Fixed
+- **`clearPage()` now clears text elements** (`canvas_notifier.dart`): Previously `clearPage()` only removed strokes. Text elements were left on the canvas even after a "clear page" action. Fixed by also clearing `textElements`, resetting selection state (`selectedStrokeIds`, `selectedTextIds`, `activeTextId`, lasso/rect), and correcting the guard: the old `if (state.strokes.isEmpty) return` would silently no-op when a page had only text. The new guard checks both lists.
+- **`deactivate()` now saves the first page** (`notebook_screen.dart`): `_NotebookScreenState.deactivate` used `_selectedPageId` which starts as `null`. If the user opened a notebook, drew on page 1, then navigated back without ever tapping a page thumbnail, the save was skipped. Fixed by reading the page list from the provider and falling back to `pages.first.id` the same way `build()` does.
+- **Defensive hex-color parsing in `_PageThumbnail`** (`page_sidebar.dart`): Added `try/catch` with `Colors.white` fallback, matching the identical guard that already existed in `_CanvasAreaState._hexToColor` in `notebook_screen.dart`. A malformed hex in the DB could previously crash the sidebar rendering.
+
+### Tests
+- 4 new unit tests in `test/canvas_notifier_test.dart` for `CanvasNotifier.clearPage`: clears both lists, clears text when no strokes exist, is undoable, no-ops when already empty (49 tests total).
+
 ## 2026-03-01 (cycle 15)
 
 ### Added
