@@ -20,6 +20,11 @@ class StrokePainter extends CustomPainter {
   final Rect? selectionRect;
   final bool isSelecting;
 
+  /// Pre-computed bounding rect of all selected content (strokes + texts).
+  /// When non-null and non-empty, a dashed bounding rect is drawn around
+  /// the selection to make the selection extent clearly visible.
+  final Rect? selectionBoundsRect;
+
   StrokePainter({
     required this.strokes,
     this.activeStroke,
@@ -27,6 +32,7 @@ class StrokePainter extends CustomPainter {
     this.selectionLassoPoints,
     this.selectionRect,
     this.isSelecting = false,
+    this.selectionBoundsRect,
   });
 
   @override
@@ -42,6 +48,7 @@ class StrokePainter extends CustomPainter {
     }
 
     _drawSelectionOutline(canvas);
+    _drawSelectionBoundsIndicator(canvas);
   }
 
   void _drawStroke(Canvas canvas, Stroke stroke) {
@@ -185,6 +192,39 @@ class StrokePainter extends CustomPainter {
     }
   }
 
+  /// Draws a dashed rounded rectangle around the full selection bounds.
+  ///
+  /// This is shown after a selection is finalised (not during the lasso/box
+  /// drag gesture) so the user can clearly see the extent of their selection.
+  void _drawSelectionBoundsIndicator(Canvas canvas) {
+    if (isSelecting) return;
+    if (selectionBoundsRect == null || selectionBoundsRect!.isEmpty) return;
+
+    const dashWidth = 7.0;
+    const dashGap = 4.0;
+    const inflate = 8.0;
+
+    final rect = selectionBoundsRect!.inflate(inflate);
+    final rrect =
+        RRect.fromRectAndRadius(rect, const Radius.circular(6));
+
+    final paint = Paint()
+      ..color = const Color(0xFF2196F3)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5
+      ..strokeCap = StrokeCap.round;
+
+    final path = Path()..addRRect(rrect);
+    for (final metric in path.computeMetrics()) {
+      double start = 0;
+      while (start < metric.length) {
+        final end = (start + dashWidth).clamp(0.0, metric.length);
+        canvas.drawPath(metric.extractPath(start, end), paint);
+        start += dashWidth + dashGap;
+      }
+    }
+  }
+
   Path _buildPath(List<Offset> outlinePoints, double strokeWidth) {
     final path = Path();
     if (outlinePoints.length == 1) {
@@ -215,6 +255,7 @@ class StrokePainter extends CustomPainter {
         oldDelegate.selectedStrokeIds != selectedStrokeIds ||
         oldDelegate.selectionLassoPoints != selectionLassoPoints ||
         oldDelegate.selectionRect != selectionRect ||
-        oldDelegate.isSelecting != isSelecting;
+        oldDelegate.isSelecting != isSelecting ||
+        oldDelegate.selectionBoundsRect != selectionBoundsRect;
   }
 }

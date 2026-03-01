@@ -217,6 +217,10 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
                     selectionLassoPoints: canvasState.selectionLassoPoints,
                     selectionRect: canvasState.selectionRect,
                     isSelecting: canvasState.isSelecting,
+                    selectionBoundsRect:
+                        (canvasState.hasSelection && !canvasState.isSelecting)
+                            ? _computeSelectionBounds(canvasState)
+                            : null,
                   ),
                 ),
                 // Text elements.
@@ -253,6 +257,16 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
                             .read(canvasProvider(widget.pageId).notifier)
                             .updateTextElement(el.copyWith(x: x, y: y))
                         : null,
+                  ),
+                // Selection bounds indicator — dashed rect + corner handles
+                // drawn around all selected strokes/text elements once a
+                // selection gesture finishes (not while still dragging).
+                if (canvasState.hasSelection && !canvasState.isSelecting)
+                  CustomPaint(
+                    size: widget.pageSize,
+                    painter: _SelectionBoundsPainter(
+                      bounds: _computeSelectionBounds(canvasState),
+                    ),
                   ),
                 // Floating selection action menu — always in tree so it can
                 // animate in/out smoothly via FadeTransition + ScaleTransition.
@@ -893,6 +907,95 @@ class _TextResizeHandleState extends State<_TextResizeHandle> {
       ),
     );
   }
+}
+
+/// Paints a dashed bounding rectangle with corner handles around all selected
+/// strokes and text elements, giving users a clear view of what is selected.
+class _SelectionBoundsPainter extends CustomPainter {
+  final Rect bounds;
+
+  const _SelectionBoundsPainter({required this.bounds});
+
+  static const double _padding = 8.0;
+  static const double _dashLength = 6.0;
+  static const double _gapLength = 4.0;
+  static const double _handleSize = 7.0;
+  static const Color _color = Color(0xFF2196F3);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (bounds.isEmpty) return;
+    final inflated = bounds.inflate(_padding);
+
+    final dashPaint = Paint()
+      ..color = _color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5
+      ..strokeCap = StrokeCap.round;
+
+    // Draw dashed rectangle using PathMetrics.
+    _drawDashedRect(canvas, inflated, dashPaint);
+
+    // Draw small filled squares at each corner as resize handles.
+    final handlePaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+    final handleBorderPaint = Paint()
+      ..color = _color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    for (final corner in [
+      inflated.topLeft,
+      inflated.topRight,
+      inflated.bottomLeft,
+      inflated.bottomRight,
+    ]) {
+      final handleRect = Rect.fromCenter(
+        center: corner,
+        width: _handleSize,
+        height: _handleSize,
+      );
+      canvas.drawRect(handleRect, handlePaint);
+      canvas.drawRect(handleRect, handleBorderPaint);
+    }
+
+    // Draw midpoint handles (top, bottom, left, right edges).
+    for (final mid in [
+      inflated.topCenter,
+      inflated.bottomCenter,
+      inflated.centerLeft,
+      inflated.centerRight,
+    ]) {
+      final handleRect = Rect.fromCenter(
+        center: mid,
+        width: _handleSize,
+        height: _handleSize,
+      );
+      canvas.drawRect(handleRect, handlePaint);
+      canvas.drawRect(handleRect, handleBorderPaint);
+    }
+  }
+
+  void _drawDashedRect(Canvas canvas, Rect rect, Paint paint) {
+    final path = Path()..addRect(rect);
+    for (final metric in path.computeMetrics()) {
+      double distance = 0.0;
+      bool drawing = true;
+      while (distance < metric.length) {
+        final segLen = drawing ? _dashLength : _gapLength;
+        final next = (distance + segLen).clamp(0.0, metric.length);
+        if (drawing) {
+          canvas.drawPath(metric.extractPath(distance, next), paint);
+        }
+        distance += segLen;
+        drawing = !drawing;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_SelectionBoundsPainter old) => old.bounds != bounds;
 }
 
 /// Paints a tool-appropriate cursor preview at the current hover position.

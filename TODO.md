@@ -25,7 +25,7 @@
 
 ## Low Priority / Polish
 - [x] 2026-03-01: Animate selection action menu (fade in/out)
-- [ ] Selection bounds indicator (dashed rect around selected content)
+- [x] 2026-03-01: Selection bounds indicator (dashed rect around selected content)
 - [ ] Pencil cursor on iPad vs mouse cursor on desktop differentiation
 - [ ] Text box: multi-line height calculation for accurate hit testing
 - [ ] Replace magic numbers with named constants (AppDimensions)

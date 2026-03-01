@@ -1,4 +1,9 @@
 
+## 2026-03-01 (cycle 15)
+
+### Added
+- **Selection bounds indicator**: After a lasso or box selection is finalised, a dashed blue rectangle is drawn around the entire bounding box of all selected strokes and text elements. The rect is inflated by 8 px for breathing room and decorated with white-filled, blue-bordered square handles at the four corners and four edge midpoints — giving the user a clear affordance that the content is selected and can be dragged or deleted. Implementation: new `_SelectionBoundsPainter` (`CustomPainter`) inserted into the canvas `Stack` between the text elements and the floating action menu. The painter uses `PathMetrics` to trace the rect path and alternates draw/skip segments (`_dashLength = 6 pt`, `_gapLength = 4 pt`). The overlay is conditionally present only when `hasSelection && !isSelecting`, so it never appears during an in-progress lasso draw or box drag.
+
 ## 2026-03-01 (cycle 14)
 
 ### Added
