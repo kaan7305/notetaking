@@ -1,4 +1,9 @@
 
+## 2026-03-01 (cycle 11)
+
+### Fixed
+- **Complete pinch-to-zoom while drawing**: `notebook_screen.dart` `_CanvasAreaState` was still setting `scaleEnabled: !isDrawingTool`, preventing zoom when a drawing tool was active. Changed to `scaleEnabled: true` so `InteractiveViewer` always handles 2-finger scale gestures. The multi-touch guard in `DrawingCanvas` (`_activePointerCount` + `cancelActiveGesture()`) that was already in place ensures a 2-finger pinch cancels any in-progress stroke cleanly.
+
 ## 2026-03-01 (cycle 10)
 
 ### Added
