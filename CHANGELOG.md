@@ -1,4 +1,16 @@
 
+## 2026-03-01 (cycle 19)
+
+### Fixed
+- **Pencil / touch / mouse cursor differentiation** in `DrawingCanvas`:
+  - Added `_activePointerKind` field, updated by `onPointerDown` / `onPointerMove` and cleared on `onPointerUp` / `onPointerCancel`.  This gives the *effective* input kind at every moment (even during a pressed drag), which is used alongside the existing `_lastHoverDeviceKind` (mouse-hover only) to decide cursor behavior.
+  - `_isCursorPreviewKind(kind)` — new static helper that returns `true` only for `mouse` and `trackpad`; `touch` and `stylus` kinds return `false`.
+  - Custom cursor-preview circle is now suppressed for touch (iPad finger) and stylus (Apple Pencil) input.  Previously the overlay could appear during a finger-draw because `onPointerMove` updated `_hoverPosition` for all pointer kinds while `_lastHoverDeviceKind` was stale from a prior mouse hover.
+  - `_cursorForTool` now returns `MouseCursor.defer` for `touch` as well as `stylus` / `invertedStylus`, ensuring the OS does not render a Flutter-managed cursor on top of touch or pencil interactions.
+  - On `onPointerDown`, if the incoming kind is not a cursor-preview kind (touch / stylus), `_hoverPosition` is immediately cleared so no stale circle appears from a previous mouse hover.
+  - `MouseRegion.cursor` and the cursor-preview overlay condition both use `_activePointerKind ?? _lastHoverDeviceKind` (active press takes priority over last hover kind).
+- **`PlatformDispatcher` undefined-identifier in `main.dart`**: Replaced `PlatformDispatcher.instance.onError` with `WidgetsBinding.instance.platformDispatcher.onError`, which avoids a missing `dart:ui` import and is the idiomatic Flutter approach when `WidgetsFlutterBinding` is already initialized.
+
 ## 2026-03-01 (cycle 18)
 
 ### Added
