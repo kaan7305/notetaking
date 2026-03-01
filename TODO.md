@@ -12,8 +12,8 @@
 - [ ] (none remaining at this priority)
 
 ### Stability / Correctness
-- [ ] Add error feedback when DB load fails on canvas open (currently silent empty canvas)
-- [ ] Validate notebook/course name max length before creating
+- [x] 2026-03-01: Add error feedback when DB load fails on canvas open (dismissible red banner)
+- [x] 2026-03-01: Validate notebook/course name max length before creating (100-char limit + counter)
 
 ## Medium Priority
 - [ ] Move selected strokes across pages (copy/paste between pages)

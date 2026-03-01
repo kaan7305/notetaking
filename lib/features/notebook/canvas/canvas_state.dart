@@ -25,6 +25,11 @@ class CanvasState {
   final double zoom;
   final Offset? hoverPosition;
 
+  /// Non-null when the initial DB load failed. The canvas remains usable
+  /// (strokes drawn in this session are still saved) but previously saved
+  /// content could not be retrieved.
+  final String? loadError;
+
   const CanvasState({
     this.strokes = const [],
     this.activeStroke,
@@ -47,6 +52,7 @@ class CanvasState {
     this.canvasOffset = Offset.zero,
     this.zoom = 1.0,
     this.hoverPosition,
+    this.loadError,
   });
 
   double get activeStrokeWidth {
@@ -89,6 +95,7 @@ class CanvasState {
     Offset? canvasOffset,
     double? zoom,
     Offset? Function()? hoverPosition,
+    String? Function()? loadError,
   }) {
     return CanvasState(
       strokes: strokes ?? this.strokes,
@@ -117,6 +124,7 @@ class CanvasState {
       canvasOffset: canvasOffset ?? this.canvasOffset,
       zoom: zoom ?? this.zoom,
       hoverPosition: hoverPosition != null ? hoverPosition() : this.hoverPosition,
+      loadError: loadError != null ? loadError() : this.loadError,
     );
   }
 }

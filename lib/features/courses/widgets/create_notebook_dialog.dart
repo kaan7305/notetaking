@@ -62,6 +62,10 @@ class _CreateNotebookDialogState extends ConsumerState<CreateNotebookDialog> {
       setState(() => _titleError = 'Please enter a notebook title');
       return;
     }
+    if (title.length > AppDimensions.maxNameLength) {
+      setState(() => _titleError = AppStrings.nameTooLong);
+      return;
+    }
 
     setState(() {
       _isSubmitting = true;
@@ -152,6 +156,7 @@ class _CreateNotebookDialogState extends ConsumerState<CreateNotebookDialog> {
                 controller: _titleController,
                 autofocus: true,
                 textCapitalization: TextCapitalization.sentences,
+                maxLength: AppDimensions.maxNameLength,
                 style: TextStyle(
                   fontSize: 15,
                   color: isDark

@@ -62,6 +62,7 @@ class _CreateCourseDialogState extends ConsumerState<CreateCourseDialog> {
   Future<void> _submit() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) return;
+    if (name.length > AppDimensions.maxNameLength) return;
 
     setState(() => _isSubmitting = true);
 
@@ -110,6 +111,7 @@ class _CreateCourseDialogState extends ConsumerState<CreateCourseDialog> {
                 controller: _nameController,
                 autofocus: true,
                 textCapitalization: TextCapitalization.words,
+                maxLength: AppDimensions.maxNameLength,
                 decoration: InputDecoration(
                   labelText: AppStrings.courseName,
                   hintText: 'e.g. Calculus 3',

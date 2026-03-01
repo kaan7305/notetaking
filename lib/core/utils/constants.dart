@@ -28,6 +28,9 @@ class AppDimensions {
   // Undo / redo
   static const int maxUndoSteps = 50;
 
+  // Input validation
+  static const int maxNameLength = 100;
+
   // Timing (milliseconds)
   static const int autoSaveDelayMs = 2000;
   static const int syncIntervalMs = 60000;
@@ -133,4 +136,6 @@ class AppStrings {
   static const String authError = 'Authentication failed. Please log in again.';
   static const String saveError = 'Could not save your changes.';
   static const String loadError = 'Could not load the requested data.';
+  static const String nameTooLong =
+      'Name must be ${AppDimensions.maxNameLength} characters or fewer.';
 }

@@ -42,7 +42,26 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
         ? textResult.data
         : <TextElement>[];
 
-    state = state.copyWith(strokes: strokes, textElements: texts);
+    // Collect any load errors to surface in the UI.
+    String? error;
+    if (strokeResult is Failure) {
+      error = (strokeResult as Failure).message;
+    } else if (textResult is Failure) {
+      error = (textResult as Failure).message;
+    }
+
+    state = state.copyWith(
+      strokes: strokes,
+      textElements: texts,
+      loadError: () => error,
+    );
+  }
+
+  // ─────────────── Error handling ───────────────
+
+  /// Clears the load error banner so the user can dismiss it.
+  void dismissLoadError() {
+    state = state.copyWith(loadError: () => null);
   }
 
   // ─────────────── Tool selection ───────────────

@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 
 import 'package:study_notebook/app/colors.dart';
 import 'package:study_notebook/core/models/models.dart';
+import 'package:study_notebook/core/utils/constants.dart';
 
 import 'canvas_notifier.dart';
 import 'canvas_state.dart';
@@ -63,7 +64,7 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
     final canvasState = ref.watch(canvasProvider(widget.pageId));
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Focus(
+    final canvas = Focus(
       focusNode: _focusNode,
       onKeyEvent: (node, event) {
         if (event is KeyDownEvent &&
@@ -252,6 +253,29 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
       ),
     ),
   );
+
+    // Overlay a dismissible error banner when the initial DB load failed.
+    if (canvasState.loadError != null) {
+      return Stack(
+        children: [
+          canvas,
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: _LoadErrorBanner(
+              message: canvasState.loadError!,
+              isDark: isDark,
+              onDismiss: () => ref
+                  .read(canvasProvider(widget.pageId).notifier)
+                  .dismissLoadError(),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return canvas;
   }
 
   void _handleTextTap(
@@ -330,6 +354,63 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
 
     if (minX == double.infinity) return Rect.zero;
     return Rect.fromLTRB(minX, minY, maxX, maxY);
+  }
+}
+
+/// A slim banner shown at the top of the canvas when the initial DB load fails.
+///
+/// The user can dismiss it; drawing still works for newly added content.
+class _LoadErrorBanner extends StatelessWidget {
+  final String message;
+  final bool isDark;
+  final VoidCallback onDismiss;
+
+  const _LoadErrorBanner({
+    required this.message,
+    required this.isDark,
+    required this.onDismiss,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.error.withValues(alpha: 0.92),
+          borderRadius: const BorderRadius.only(
+            bottomLeft: Radius.circular(8),
+            bottomRight: Radius.circular(8),
+          ),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded,
+                size: 16, color: Colors.white),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                '${AppStrings.loadError} ($message)',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: onDismiss,
+              child: const Icon(Icons.close_rounded,
+                  size: 16, color: Colors.white),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

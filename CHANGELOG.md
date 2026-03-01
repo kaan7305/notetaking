@@ -1,4 +1,12 @@
 
+## 2026-03-01 (cycle 5)
+
+### Fixed
+- **DB load error feedback on canvas**: `CanvasState` now has a nullable `loadError` field. When `_loadAll()` in `CanvasNotifier` receives a `Failure` from either `StrokeDao` or `TextElementDao`, it stores the error message in state rather than silently continuing with empty lists. `DrawingCanvas` checks for `loadError != null` and overlays a slim red dismissible banner at the top of the canvas explaining that saved content could not be loaded (the canvas remains usable for new strokes drawn in the current session).
+
+### Added
+- **Name max-length validation** for course and notebook creation dialogs: `AppDimensions.maxNameLength = 100` and `AppStrings.nameTooLong` constants added. Both `CreateCourseDialog` and `CreateNotebookDialog` now pass `maxLength: 100` to their `TextField` widgets (showing a live character counter) and guard `_submit()` with a length check that surfaces a validation error before any DB call is made.
+
 ## 2026-03-01 (cycle 4)
 
 ### Added
