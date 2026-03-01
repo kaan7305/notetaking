@@ -24,6 +24,7 @@ class _CreateNotebookDialogState extends ConsumerState<CreateNotebookDialog> {
   String _selectedBgColor = '#FFFFFF';
   double _lineSpacing = 32.0;
   bool _isSubmitting = false;
+  String? _titleError;
 
   static const _bgColors = [
     _BgOption('#FFFFFF', 'White'),
@@ -37,10 +38,10 @@ class _CreateNotebookDialogState extends ConsumerState<CreateNotebookDialog> {
   ];
 
   static const _templates = [
-    _TemplateOption('blank', 'Blank', Icons.crop_portrait_outlined),
-    _TemplateOption('lined', 'Lined', Icons.format_align_left_outlined),
-    _TemplateOption('grid', 'Grid', Icons.grid_on_outlined),
-    _TemplateOption('dotted', 'Dotted', Icons.blur_on_outlined),
+    _TemplateOption('blank', 'Blank', Icons.crop_portrait_rounded),
+    _TemplateOption('lined', 'Lined', Icons.format_align_left_rounded),
+    _TemplateOption('grid', 'Grid', Icons.grid_on_rounded),
+    _TemplateOption('dotted', 'Dotted', Icons.blur_on_rounded),
   ];
 
   @override
@@ -57,9 +58,15 @@ class _CreateNotebookDialogState extends ConsumerState<CreateNotebookDialog> {
 
   Future<void> _submit() async {
     final title = _titleController.text.trim();
-    if (title.isEmpty) return;
+    if (title.isEmpty) {
+      setState(() => _titleError = 'Please enter a notebook title');
+      return;
+    }
 
-    setState(() => _isSubmitting = true);
+    setState(() {
+      _isSubmitting = true;
+      _titleError = null;
+    });
 
     try {
       final notifier = ref.read(notebookProvider(widget.courseId).notifier);
@@ -84,7 +91,12 @@ class _CreateNotebookDialogState extends ConsumerState<CreateNotebookDialog> {
           );
       }
     } catch (e) {
-      if (mounted) setState(() => _isSubmitting = false);
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Something went wrong: $e')),
+        );
+      }
     }
   }
 
@@ -95,46 +107,73 @@ class _CreateNotebookDialogState extends ConsumerState<CreateNotebookDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      backgroundColor: isDark ? AppColors.cardDark : AppColors.cardLight,
+      elevation: 0,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 460),
+        constraints: const BoxConstraints(maxWidth: 480),
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(28),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
+              // Title
+              Text(
                 AppStrings.newNotebook,
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.5,
+                  color: isDark
+                      ? AppColors.onSurfaceDark
+                      : AppColors.onSurfaceLight,
+                ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 6),
+              Text(
+                'Set up your notebook preferences',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isDark
+                      ? AppColors.onSurfaceDark.withValues(alpha: 0.4)
+                      : AppColors.onSurfaceLight.withValues(alpha: 0.4),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
 
-              // Title field.
+              // Title field
               TextField(
                 controller: _titleController,
                 autofocus: true,
                 textCapitalization: TextCapitalization.sentences,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: isDark
+                      ? AppColors.onSurfaceDark
+                      : AppColors.onSurfaceLight,
+                ),
                 decoration: InputDecoration(
                   labelText: AppStrings.notebookTitle,
                   hintText: 'e.g. Week 1 - Vectors',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide:
-                        const BorderSide(color: AppColors.primary, width: 2),
-                  ),
+                  errorText: _titleError,
                 ),
+                onChanged: (_) {
+                  if (_titleError != null) {
+                    setState(() => _titleError = null);
+                  }
+                },
                 onSubmitted: (_) => _submit(),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
 
-              // Page size.
-              _sectionLabel('Page Size'),
+              // Page size
+              _sectionLabel('Page Size', isDark),
               const SizedBox(height: 10),
               Row(
                 children: [
@@ -143,61 +182,91 @@ class _CreateNotebookDialogState extends ConsumerState<CreateNotebookDialog> {
                     subtitle: '8.5 x 11 in',
                     isSelected: _selectedPageSize == 'letter',
                     onTap: () => setState(() => _selectedPageSize = 'letter'),
+                    isDark: isDark,
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   _PageSizeOption(
                     label: 'A4',
                     subtitle: '210 x 297 mm',
                     isSelected: _selectedPageSize == 'a4',
                     onTap: () => setState(() => _selectedPageSize = 'a4'),
+                    isDark: isDark,
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
 
-              // Template.
-              _sectionLabel('Template'),
+              // Template
+              _sectionLabel('Template', isDark),
               const SizedBox(height: 10),
               Row(
                 children: _templates.map((t) {
                   final selected = _selectedTemplate == t.value;
                   return Expanded(
                     child: GestureDetector(
-                      onTap: () => setState(() => _selectedTemplate = t.value),
-                      child: Container(
+                      onTap: () =>
+                          setState(() => _selectedTemplate = t.value),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
                         margin: const EdgeInsets.only(right: 8),
                         padding: const EdgeInsets.symmetric(
-                            vertical: 10, horizontal: 4),
+                            vertical: 12, horizontal: 4),
                         decoration: BoxDecoration(
                           color: selected
-                              ? AppColors.primary.withValues(alpha: 0.08)
-                              : Colors.grey.shade50,
-                          borderRadius: BorderRadius.circular(8),
+                              ? (isDark
+                                  ? AppColors.toolbarActiveDark
+                                  : AppColors.primary.withValues(alpha: 0.08))
+                              : (isDark
+                                  ? const Color(0xFF252838)
+                                  : const Color(0xFFF4F5FA)),
+                          borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: selected
                                 ? AppColors.primary
-                                : Colors.grey.shade300,
+                                : (isDark
+                                    ? AppColors.cardBorderDark
+                                    : AppColors.cardBorderLight),
                             width: selected ? 2 : 1,
                           ),
+                          boxShadow: selected
+                              ? [
+                                  BoxShadow(
+                                    color:
+                                        AppColors.primary.withValues(alpha: 0.12),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ]
+                              : null,
                         ),
                         child: Column(
                           children: [
-                            Icon(t.icon,
-                                color: selected
-                                    ? AppColors.primary
-                                    : Colors.grey.shade500,
-                                size: 22),
-                            const SizedBox(height: 4),
+                            Icon(
+                              t.icon,
+                              color: selected
+                                  ? AppColors.primary
+                                  : (isDark
+                                      ? AppColors.onSurfaceDark
+                                          .withValues(alpha: 0.4)
+                                      : AppColors.onSurfaceLight
+                                          .withValues(alpha: 0.4)),
+                              size: 22,
+                            ),
+                            const SizedBox(height: 6),
                             Text(
                               t.label,
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: selected
                                     ? FontWeight.w600
-                                    : FontWeight.normal,
+                                    : FontWeight.w500,
                                 color: selected
                                     ? AppColors.primary
-                                    : Colors.black87,
+                                    : (isDark
+                                        ? AppColors.onSurfaceDark
+                                            .withValues(alpha: 0.6)
+                                        : AppColors.onSurfaceLight
+                                            .withValues(alpha: 0.6)),
                               ),
                             ),
                           ],
@@ -207,11 +276,11 @@ class _CreateNotebookDialogState extends ConsumerState<CreateNotebookDialog> {
                   );
                 }).toList(),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
 
-              // Line spacing (only when a lined template is selected).
+              // Line spacing
               if (_hasLines) ...[
-                _sectionLabel('Line Spacing'),
+                _sectionLabel('Line Spacing', isDark),
                 const SizedBox(height: 10),
                 Row(
                   children: [
@@ -224,18 +293,26 @@ class _CreateNotebookDialogState extends ConsumerState<CreateNotebookDialog> {
                         child: GestureDetector(
                           onTap: () =>
                               setState(() => _lineSpacing = option.$2),
-                          child: Container(
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
                             margin: const EdgeInsets.only(right: 8),
-                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            padding: const EdgeInsets.symmetric(vertical: 10),
                             decoration: BoxDecoration(
                               color: _lineSpacing == option.$2
-                                  ? AppColors.primary.withValues(alpha: 0.08)
-                                  : Colors.grey.shade50,
-                              borderRadius: BorderRadius.circular(8),
+                                  ? (isDark
+                                      ? AppColors.toolbarActiveDark
+                                      : AppColors.primary
+                                          .withValues(alpha: 0.08))
+                                  : (isDark
+                                      ? const Color(0xFF252838)
+                                      : const Color(0xFFF4F5FA)),
+                              borderRadius: BorderRadius.circular(10),
                               border: Border.all(
                                 color: _lineSpacing == option.$2
                                     ? AppColors.primary
-                                    : Colors.grey.shade300,
+                                    : (isDark
+                                        ? AppColors.cardBorderDark
+                                        : AppColors.cardBorderLight),
                                 width: _lineSpacing == option.$2 ? 2 : 1,
                               ),
                             ),
@@ -246,10 +323,14 @@ class _CreateNotebookDialogState extends ConsumerState<CreateNotebookDialog> {
                                 fontSize: 12,
                                 fontWeight: _lineSpacing == option.$2
                                     ? FontWeight.w600
-                                    : FontWeight.normal,
+                                    : FontWeight.w500,
                                 color: _lineSpacing == option.$2
                                     ? AppColors.primary
-                                    : Colors.black87,
+                                    : (isDark
+                                        ? AppColors.onSurfaceDark
+                                            .withValues(alpha: 0.6)
+                                        : AppColors.onSurfaceLight
+                                            .withValues(alpha: 0.6)),
                               ),
                             ),
                           ),
@@ -257,15 +338,15 @@ class _CreateNotebookDialogState extends ConsumerState<CreateNotebookDialog> {
                       ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
               ],
 
-              // Background color.
-              _sectionLabel('Background Color'),
+              // Background color
+              _sectionLabel('Background Color', isDark),
               const SizedBox(height: 10),
               Wrap(
-                spacing: 8,
-                runSpacing: 8,
+                spacing: 10,
+                runSpacing: 10,
                 children: _bgColors.map((opt) {
                   final hex = opt.hex;
                   final selected = _selectedBgColor == hex;
@@ -273,30 +354,40 @@ class _CreateNotebookDialogState extends ConsumerState<CreateNotebookDialog> {
                     onTap: () => setState(() => _selectedBgColor = hex),
                     child: Tooltip(
                       message: opt.label,
-                      child: Container(
-                        width: 36,
-                        height: 36,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: 38,
+                        height: 38,
                         decoration: BoxDecoration(
                           color: _hexToColor(hex),
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: selected
                                 ? AppColors.primary
-                                : Colors.grey.shade300,
-                            width: selected ? 2.5 : 1,
+                                : (isDark
+                                    ? AppColors.cardBorderDark
+                                    : Colors.grey.shade300),
+                            width: selected ? 2.5 : 1.5,
                           ),
                           boxShadow: selected
                               ? [
                                   BoxShadow(
                                     color: AppColors.primary
-                                        .withValues(alpha: 0.3),
-                                    blurRadius: 4,
+                                        .withValues(alpha: 0.25),
+                                    blurRadius: 8,
+                                    spreadRadius: -1,
                                   )
                                 ]
-                              : null,
+                              : [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.06),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 1),
+                                  ),
+                                ],
                         ),
                         child: selected
-                            ? Icon(Icons.check,
+                            ? Icon(Icons.check_rounded,
                                 size: 16, color: AppColors.primary)
                             : null,
                       ),
@@ -304,33 +395,54 @@ class _CreateNotebookDialogState extends ConsumerState<CreateNotebookDialog> {
                   );
                 }).toList(),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 28),
 
-              // Buttons.
+              // Buttons
               Row(
-                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(
-                    onPressed:
-                        _isSubmitting ? null : () => Navigator.of(context).pop(),
-                    child: const Text('Cancel'),
+                  Expanded(
+                    child: TextButton(
+                      onPressed: _isSubmitting
+                          ? null
+                          : () => Navigator.of(context).pop(),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          side: BorderSide(
+                            color: isDark
+                                ? AppColors.cardBorderDark
+                                : AppColors.cardBorderLight,
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(
+                          color: isDark
+                              ? AppColors.onSurfaceDark.withValues(alpha: 0.6)
+                              : AppColors.onSurfaceLight.withValues(alpha: 0.5),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 12),
-                  FilledButton(
-                    onPressed: _isSubmitting ? null : _submit,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.primary,
+                  Expanded(
+                    flex: 2,
+                    child: FilledButton(
+                      onPressed: _isSubmitting ? null : _submit,
+                      child: _isSubmitting
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text('Create Notebook'),
                     ),
-                    child: _isSubmitting
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text('Create'),
                   ),
                 ],
               ),
@@ -341,12 +453,15 @@ class _CreateNotebookDialogState extends ConsumerState<CreateNotebookDialog> {
     );
   }
 
-  Widget _sectionLabel(String text) => Text(
+  Widget _sectionLabel(String text, bool isDark) => Text(
         text,
-        style: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-          color: Colors.black54,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.3,
+          color: isDark
+              ? AppColors.onSurfaceDark.withValues(alpha: 0.5)
+              : AppColors.onSurfaceLight.withValues(alpha: 0.45),
         ),
       );
 
@@ -377,44 +492,72 @@ class _PageSizeOption extends StatelessWidget {
     required this.subtitle,
     required this.isSelected,
     required this.onTap,
+    required this.isDark,
   });
 
   final String label;
   final String subtitle;
   final bool isSelected;
   final VoidCallback onTap;
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
           decoration: BoxDecoration(
             color: isSelected
-                ? AppColors.primary.withValues(alpha: 0.08)
-                : Colors.grey.shade50,
-            borderRadius: BorderRadius.circular(10),
+                ? (isDark
+                    ? AppColors.toolbarActiveDark
+                    : AppColors.primary.withValues(alpha: 0.08))
+                : (isDark
+                    ? const Color(0xFF252838)
+                    : const Color(0xFFF4F5FA)),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: isSelected ? AppColors.primary : Colors.grey.shade300,
+              color: isSelected
+                  ? AppColors.primary
+                  : (isDark
+                      ? AppColors.cardBorderDark
+                      : AppColors.cardBorderLight),
               width: isSelected ? 2 : 1,
             ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.12),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
           ),
           child: Column(
             children: [
               Icon(
                 Icons.description_outlined,
-                color: isSelected ? AppColors.primary : Colors.grey.shade500,
+                color: isSelected
+                    ? AppColors.primary
+                    : (isDark
+                        ? AppColors.onSurfaceDark.withValues(alpha: 0.4)
+                        : AppColors.onSurfaceLight.withValues(alpha: 0.4)),
                 size: 28,
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               Text(
                 label,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: isSelected ? AppColors.primary : Colors.black87,
+                  color: isSelected
+                      ? AppColors.primary
+                      : (isDark
+                          ? AppColors.onSurfaceDark
+                          : AppColors.onSurfaceLight),
                 ),
               ),
               const SizedBox(height: 2),
@@ -424,7 +567,9 @@ class _PageSizeOption extends StatelessWidget {
                   fontSize: 11,
                   color: isSelected
                       ? AppColors.primary.withValues(alpha: 0.7)
-                      : Colors.grey.shade500,
+                      : (isDark
+                          ? AppColors.onSurfaceDark.withValues(alpha: 0.4)
+                          : AppColors.onSurfaceLight.withValues(alpha: 0.4)),
                 ),
               ),
             ],

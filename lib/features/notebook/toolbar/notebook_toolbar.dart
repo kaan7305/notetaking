@@ -43,153 +43,213 @@ class _NotebookToolbarState extends ConsumerState<NotebookToolbar> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        // Main toolbar
         Container(
-          height: AppDimensions.toolbarHeight,
+          height: AppDimensions.toolbarHeight + 4,
           decoration: BoxDecoration(
             color: isDark
                 ? AppColors.toolbarBackgroundDark
                 : AppColors.toolbarBackgroundLight,
             border: Border(
-              bottom: BorderSide(color: AppColors.toolbarDivider, width: 0.5),
+              bottom: BorderSide(
+                color: isDark
+                    ? AppColors.toolbarDividerDark
+                    : AppColors.toolbarDivider,
+                width: 1,
+              ),
             ),
           ),
+          padding: const EdgeInsets.symmetric(horizontal: 6),
           child: Row(
             children: [
-              // Back to home.
-              _ToolbarButton(
-                icon: Icons.arrow_back,
+              // Back button
+              _ModernToolbarButton(
+                icon: Icons.arrow_back_rounded,
                 onPressed: () => context.go('/home'),
                 tooltip: 'Back to Home',
+                isDark: isDark,
               ),
-              const VerticalDivider(width: 1),
+              _toolbarDivider(isDark),
 
-              // Page sidebar toggle.
+              // Page sidebar toggle
               if (widget.onTogglePageSidebar != null)
-                _ToolbarButton(
-                  icon: Icons.menu,
+                _ModernToolbarButton(
+                  icon: Icons.view_sidebar_rounded,
                   onPressed: widget.onTogglePageSidebar!,
                   tooltip: 'Pages',
+                  isDark: isDark,
                 ),
-              const VerticalDivider(width: 1),
+              _toolbarDivider(isDark),
 
-              // Drawing tools.
-              _ToolButton(
-                icon: Icons.ads_click,
-                tool: ToolType.pointer,
-                currentTool: canvasState.currentTool,
-                onPressed: () => _selectTool(ToolType.pointer),
-              ),
-              _ToolButton(
-                icon: Icons.edit,
-                tool: ToolType.pen,
-                currentTool: canvasState.currentTool,
-                onPressed: () {
-                  if (canvasState.currentTool == ToolType.pen) {
-                    _showPenStylePicker(context, canvasState.currentPenStyle);
-                  } else {
-                    _selectTool(ToolType.pen);
-                  }
-                },
-              ),
-              _ToolButton(
-                icon: Icons.format_color_fill,
-                tool: ToolType.highlighter,
-                currentTool: canvasState.currentTool,
-                onPressed: () => _selectTool(ToolType.highlighter),
-              ),
-              _ToolButton(
-                icon: Icons.cleaning_services,
-                tool: ToolType.eraser,
-                currentTool: canvasState.currentTool,
-                onPressed: () => _selectTool(ToolType.eraser),
-              ),
-              _ToolButton(
-                icon: Icons.gesture,
-                tool: ToolType.lasso,
-                currentTool: canvasState.currentTool,
-                onPressed: () => _selectTool(ToolType.lasso),
-              ),
-              _ToolButton(
-                icon: Icons.text_fields,
-                tool: ToolType.text,
-                currentTool: canvasState.currentTool,
-                onPressed: () => _selectTool(ToolType.text),
+              const SizedBox(width: 2),
+
+              // Drawing tools group — pill container
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF252838)
+                      : const Color(0xFFEEF0F6),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _ToolPillButton(
+                      icon: Icons.near_me_rounded,
+                      tool: ToolType.pointer,
+                      currentTool: canvasState.currentTool,
+                      onPressed: () => _selectTool(ToolType.pointer),
+                      isDark: isDark,
+                    ),
+                    _ToolPillButton(
+                      icon: Icons.edit_rounded,
+                      tool: ToolType.pen,
+                      currentTool: canvasState.currentTool,
+                      onPressed: () {
+                        if (canvasState.currentTool == ToolType.pen) {
+                          _showPenStylePicker(
+                              context, canvasState.currentPenStyle);
+                        } else {
+                          _selectTool(ToolType.pen);
+                        }
+                      },
+                      isDark: isDark,
+                    ),
+                    _ToolPillButton(
+                      icon: Icons.format_color_fill_rounded,
+                      tool: ToolType.highlighter,
+                      currentTool: canvasState.currentTool,
+                      onPressed: () => _selectTool(ToolType.highlighter),
+                      isDark: isDark,
+                    ),
+                    _ToolPillButton(
+                      icon: Icons.auto_fix_high_rounded,
+                      tool: ToolType.eraser,
+                      currentTool: canvasState.currentTool,
+                      onPressed: () => _selectTool(ToolType.eraser),
+                      isDark: isDark,
+                    ),
+                    _ToolPillButton(
+                      icon: Icons.gesture_rounded,
+                      tool: ToolType.lasso,
+                      currentTool: canvasState.currentTool,
+                      onPressed: () => _selectTool(ToolType.lasso),
+                      isDark: isDark,
+                    ),
+                    _ToolPillButton(
+                      icon: Icons.text_fields_rounded,
+                      tool: ToolType.text,
+                      currentTool: canvasState.currentTool,
+                      onPressed: () => _selectTool(ToolType.text),
+                      isDark: isDark,
+                    ),
+                  ],
+                ),
               ),
 
-              const VerticalDivider(width: 1),
+              const SizedBox(width: 6),
+              _toolbarDivider(isDark),
 
-              // Color indicator button.
-              _ToolbarButton(
-                icon: Icons.circle,
-                iconColor: canvasState.currentColor,
-                onPressed: () => setState(() {
-                  _showColorPicker = !_showColorPicker;
-                  _showStrokeWidth = false;
-                }),
-                tooltip: 'Color',
+              // Color indicator
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: _ColorIndicatorButton(
+                  color: canvasState.currentColor,
+                  isActive: _showColorPicker,
+                  onPressed: () => setState(() {
+                    _showColorPicker = !_showColorPicker;
+                    _showStrokeWidth = false;
+                  }),
+                  isDark: isDark,
+                ),
               ),
 
-              // Stroke width button.
-              _ToolbarButton(
-                icon: Icons.line_weight,
+              // Stroke width button
+              _ModernToolbarButton(
+                icon: Icons.line_weight_rounded,
                 onPressed: () => setState(() {
                   _showStrokeWidth = !_showStrokeWidth;
                   _showColorPicker = false;
                 }),
                 tooltip: 'Stroke Width',
+                isDark: isDark,
+                isActive: _showStrokeWidth,
               ),
 
               const Spacer(),
 
-              // Delete selected stroke(s).
+              // Delete selected stroke(s)
               if ((canvasState.currentTool == ToolType.pointer ||
                       canvasState.currentTool == ToolType.lasso) &&
                   canvasState.hasSelection)
-                _ToolbarButton(
-                  icon: Icons.delete,
-                  iconColor: Colors.redAccent,
+                _ModernToolbarButton(
+                  icon: Icons.delete_rounded,
+                  iconColor: AppColors.error,
                   onPressed: () => ref
                       .read(canvasProvider(widget.pageId).notifier)
                       .deleteSelectedStrokes(),
                   tooltip: 'Delete selected',
+                  isDark: isDark,
                 ),
 
-              // Undo / Redo.
-              _ToolbarButton(
-                icon: Icons.undo,
-                onPressed: canvasState.canUndo ? () => _undo() : null,
-                tooltip: 'Undo',
-              ),
-              _ToolbarButton(
-                icon: Icons.redo,
-                onPressed: canvasState.canRedo ? () => _redo() : null,
-                tooltip: 'Redo',
+              // Undo / Redo group
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF252838)
+                      : const Color(0xFFEEF0F6),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _ModernToolbarButton(
+                      icon: Icons.undo_rounded,
+                      onPressed: canvasState.canUndo ? () => _undo() : null,
+                      tooltip: 'Undo',
+                      isDark: isDark,
+                      compact: true,
+                    ),
+                    _ModernToolbarButton(
+                      icon: Icons.redo_rounded,
+                      onPressed: canvasState.canRedo ? () => _redo() : null,
+                      tooltip: 'Redo',
+                      isDark: isDark,
+                      compact: true,
+                    ),
+                  ],
+                ),
               ),
 
-              const VerticalDivider(width: 1),
+              _toolbarDivider(isDark),
 
-              // AI Assistant toggle.
+              // AI Assistant toggle
               if (widget.onToggleAiPanel != null)
-                _ToolbarButton(
-                  icon: Icons.auto_awesome,
-                  iconColor: widget.isAiPanelOpen ? AppColors.primary : null,
+                _AiToggleButton(
+                  isActive: widget.isAiPanelOpen,
                   onPressed: widget.onToggleAiPanel!,
-                  tooltip: 'AI Assistant',
+                  isDark: isDark,
                 ),
             ],
           ),
         ),
 
-        // Color picker row (hidden when text tool is active).
+        // Color picker row
         if (_showColorPicker && canvasState.currentTool != ToolType.text)
           ColorPickerRow(
             selectedColor: canvasState.currentColor,
             onColorSelected: (color) {
-              ref.read(canvasProvider(widget.pageId).notifier).selectColor(color);
+              ref
+                  .read(canvasProvider(widget.pageId).notifier)
+                  .selectColor(color);
             },
           ),
 
-        // Stroke width / eraser radius slider (hidden when text tool is active).
+        // Stroke width slider
         if (_showStrokeWidth && canvasState.currentTool != ToolType.text)
           StrokeWidthSlider(
             value: canvasState.currentTool == ToolType.highlighter
@@ -200,7 +260,8 @@ class _NotebookToolbarState extends ConsumerState<NotebookToolbar> {
             min: canvasState.currentTool == ToolType.eraser ? 5.0 : 1.0,
             max: canvasState.currentTool == ToolType.eraser ? 80.0 : 40.0,
             onChanged: (value) {
-              final notifier = ref.read(canvasProvider(widget.pageId).notifier);
+              final notifier =
+                  ref.read(canvasProvider(widget.pageId).notifier);
               if (canvasState.currentTool == ToolType.highlighter) {
                 notifier.setHighlighterWidth(value);
               } else if (canvasState.currentTool == ToolType.eraser) {
@@ -211,16 +272,26 @@ class _NotebookToolbarState extends ConsumerState<NotebookToolbar> {
             },
           ),
 
-        // Text formatting toolbar — shown whenever text tool is active.
+        // Text formatting toolbar
         if (canvasState.currentTool == ToolType.text)
           _TextFormatToolbar(pageId: widget.pageId),
 
-        // Selection toolbar — shown when lasso tool is active.
+        // Selection toolbar
         if (canvasState.currentTool == ToolType.lasso)
           SelectionToolbar(pageId: widget.pageId),
       ],
     );
   }
+
+  Widget _toolbarDivider(bool isDark) => Container(
+        width: 1,
+        height: 24,
+        margin: const EdgeInsets.symmetric(horizontal: 6),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.toolbarDividerDark : AppColors.toolbarDivider,
+          borderRadius: BorderRadius.circular(1),
+        ),
+      );
 
   void _selectTool(ToolType tool) {
     ref.read(canvasProvider(widget.pageId).notifier).selectTool(tool);
@@ -239,7 +310,9 @@ class _NotebookToolbarState extends ConsumerState<NotebookToolbar> {
       builder: (ctx) => PenStylePicker(
         currentStyle: current,
         onStyleSelected: (style) {
-          ref.read(canvasProvider(widget.pageId).notifier).selectPenStyle(style);
+          ref
+              .read(canvasProvider(widget.pageId).notifier)
+              .selectPenStyle(style);
           Navigator.pop(ctx);
         },
       ),
@@ -247,35 +320,225 @@ class _NotebookToolbarState extends ConsumerState<NotebookToolbar> {
   }
 }
 
-/// A tool selection button that highlights when active.
-class _ToolButton extends StatelessWidget {
+/// A tool button inside the pill container with animated active state.
+class _ToolPillButton extends StatelessWidget {
   final IconData icon;
   final ToolType tool;
   final ToolType currentTool;
   final VoidCallback onPressed;
+  final bool isDark;
 
-  const _ToolButton({
+  const _ToolPillButton({
     required this.icon,
     required this.tool,
     required this.currentTool,
     required this.onPressed,
+    required this.isDark,
   });
 
   @override
   Widget build(BuildContext context) {
     final isActive = tool == currentTool;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 2),
-      child: IconButton(
-        icon: Icon(icon, size: 22),
-        color: isActive ? AppColors.primary : null,
-        style: isActive
-            ? IconButton.styleFrom(
-                backgroundColor: AppColors.primary.withValues(alpha: 0.12),
-              )
-            : null,
-        onPressed: onPressed,
-        tooltip: tool.name,
+      padding: const EdgeInsets.symmetric(horizontal: 1),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+        decoration: BoxDecoration(
+          color: isActive
+              ? (isDark ? AppColors.toolbarActiveDark : AppColors.primary)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onPressed,
+            borderRadius: BorderRadius.circular(10),
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Icon(
+                icon,
+                size: 20,
+                color: isActive
+                    ? Colors.white
+                    : (isDark
+                        ? AppColors.onSurfaceDark.withValues(alpha: 0.6)
+                        : AppColors.onSurfaceLight.withValues(alpha: 0.5)),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A modern toolbar icon button with subtle hover effect.
+class _ModernToolbarButton extends StatelessWidget {
+  final IconData icon;
+  final Color? iconColor;
+  final VoidCallback? onPressed;
+  final String tooltip;
+  final bool isDark;
+  final bool isActive;
+  final bool compact;
+
+  const _ModernToolbarButton({
+    required this.icon,
+    this.iconColor,
+    required this.onPressed,
+    required this.tooltip,
+    required this.isDark,
+    this.isActive = false,
+    this.compact = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(10),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: EdgeInsets.all(compact ? 6 : 8),
+            decoration: BoxDecoration(
+              color: isActive
+                  ? (isDark
+                      ? AppColors.toolbarActiveDark
+                      : AppColors.toolbarActiveLight)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              icon,
+              size: compact ? 18 : 20,
+              color: iconColor ??
+                  (onPressed == null
+                      ? (isDark
+                          ? AppColors.onSurfaceDark.withValues(alpha: 0.2)
+                          : AppColors.onSurfaceLight.withValues(alpha: 0.2))
+                      : isActive
+                          ? AppColors.primary
+                          : (isDark
+                              ? AppColors.onSurfaceDark.withValues(alpha: 0.7)
+                              : AppColors.onSurfaceLight
+                                  .withValues(alpha: 0.6))),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Color indicator circle with selection ring.
+class _ColorIndicatorButton extends StatelessWidget {
+  final Color color;
+  final bool isActive;
+  final VoidCallback onPressed;
+  final bool isDark;
+
+  const _ColorIndicatorButton({
+    required this.color,
+    required this.isActive,
+    required this.onPressed,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Color',
+      child: GestureDetector(
+        onTap: onPressed,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: isActive
+                  ? AppColors.primary
+                  : (isDark
+                      ? AppColors.toolbarDividerDark
+                      : AppColors.toolbarDivider),
+              width: isActive ? 2.5 : 1.5,
+            ),
+          ),
+          padding: const EdgeInsets.all(3),
+          child: Container(
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: color.withValues(alpha: 0.4),
+                  blurRadius: 4,
+                  spreadRadius: -1,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The AI toggle with a gradient active state.
+class _AiToggleButton extends StatelessWidget {
+  final bool isActive;
+  final VoidCallback onPressed;
+  final bool isDark;
+
+  const _AiToggleButton({
+    required this.isActive,
+    required this.onPressed,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'AI Assistant',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(10),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              gradient: isActive
+                  ? LinearGradient(
+                      colors: [
+                        AppColors.primary,
+                        AppColors.secondary,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              Icons.auto_awesome_rounded,
+              size: 20,
+              color: isActive
+                  ? Colors.white
+                  : (isDark
+                      ? AppColors.onSurfaceDark.withValues(alpha: 0.6)
+                      : AppColors.onSurfaceLight.withValues(alpha: 0.5)),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -291,12 +554,12 @@ class _TextFormatToolbar extends ConsumerWidget {
   static const _colorOptions = [
     ('#000000', Color(0xFF000000)),
     ('#FFFFFF', Color(0xFFFFFFFF)),
-    ('#F44336', Color(0xFFF44336)),
-    ('#2196F3', Color(0xFF2196F3)),
-    ('#4CAF50', Color(0xFF4CAF50)),
-    ('#FF9800', Color(0xFFFF9800)),
-    ('#9C27B0', Color(0xFF9C27B0)),
-    ('#795548', Color(0xFF795548)),
+    ('#EF4444', Color(0xFFEF4444)),
+    ('#3B82F6', Color(0xFF3B82F6)),
+    ('#22C55E', Color(0xFF22C55E)),
+    ('#F97316', Color(0xFFF97316)),
+    ('#A855F7', Color(0xFFA855F7)),
+    ('#78716C', Color(0xFF78716C)),
   ];
 
   @override
@@ -304,7 +567,6 @@ class _TextFormatToolbar extends ConsumerWidget {
     final canvasState = ref.watch(canvasProvider(pageId));
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Find the currently active text element.
     final activeId = canvasState.activeTextId;
     final candidates =
         canvasState.textElements.where((e) => e.id == activeId);
@@ -321,69 +583,93 @@ class _TextFormatToolbar extends ConsumerWidget {
     final lastSizeIdx = _fontSizes.lastIndexWhere((s) => s <= currentSize);
 
     return Container(
-      height: 40,
+      height: 44,
       decoration: BoxDecoration(
         color: isDark
             ? AppColors.toolbarBackgroundDark
             : AppColors.toolbarBackgroundLight,
         border: Border(
-          bottom: BorderSide(color: AppColors.toolbarDivider, width: 0.5),
+          bottom: BorderSide(
+            color: isDark
+                ? AppColors.toolbarDividerDark
+                : AppColors.toolbarDivider,
+            width: 1,
+          ),
         ),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14),
       child: Row(
         children: [
           if (activeEl == null)
             Text(
-              'Click on the page to add a text box',
+              'Tap on the page to add a text box',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 13,
                 fontStyle: FontStyle.italic,
-                color: isDark ? Colors.white38 : Colors.black38,
+                color: isDark
+                    ? AppColors.onSurfaceDark.withValues(alpha: 0.3)
+                    : AppColors.onSurfaceLight.withValues(alpha: 0.3),
               ),
             )
           else ...[
-            // Font size decrease.
-            IconButton(
-              icon: const Icon(Icons.text_decrease, size: 18),
-              padding: EdgeInsets.zero,
-              constraints:
-                  const BoxConstraints(minWidth: 28, minHeight: 28),
-              onPressed: sizeIdx > 0
-                  ? () => updateEl(
-                      (el) => el.copyWith(fontSize: _fontSizes[sizeIdx - 1]))
-                  : null,
-              tooltip: 'Decrease font size',
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6),
-              child: Text(
-                '${currentSize.toInt()}',
-                style: const TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.w500),
+            // Font size controls in a pill
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF252838) : const Color(0xFFEEF0F6),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  _miniIconButton(
+                    Icons.remove_rounded,
+                    sizeIdx > 0
+                        ? () => updateEl(
+                            (el) => el.copyWith(fontSize: _fontSizes[sizeIdx - 1]))
+                        : null,
+                    isDark,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Text(
+                      '${currentSize.toInt()}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: isDark
+                            ? AppColors.onSurfaceDark
+                            : AppColors.onSurfaceLight,
+                      ),
+                    ),
+                  ),
+                  _miniIconButton(
+                    Icons.add_rounded,
+                    lastSizeIdx < _fontSizes.length - 1
+                        ? () => updateEl((el) =>
+                            el.copyWith(fontSize: _fontSizes[lastSizeIdx + 1]))
+                        : null,
+                    isDark,
+                  ),
+                ],
               ),
             ),
-            // Font size increase.
-            IconButton(
-              icon: const Icon(Icons.text_increase, size: 18),
-              padding: EdgeInsets.zero,
-              constraints:
-                  const BoxConstraints(minWidth: 28, minHeight: 28),
-              onPressed: lastSizeIdx < _fontSizes.length - 1
-                  ? () => updateEl((el) =>
-                      el.copyWith(fontSize: _fontSizes[lastSizeIdx + 1]))
-                  : null,
-              tooltip: 'Increase font size',
+            const SizedBox(width: 10),
+            Container(
+              width: 1,
+              height: 20,
+              color: isDark
+                  ? AppColors.toolbarDividerDark
+                  : AppColors.toolbarDivider,
             ),
-            const SizedBox(width: 4),
-            const VerticalDivider(width: 16, indent: 8, endIndent: 8),
-            // Color swatches.
+            const SizedBox(width: 10),
+            // Color swatches
             for (final c in _colorOptions)
               GestureDetector(
                 onTap: () => updateEl((el) => el.copyWith(color: c.$1)),
-                child: Container(
-                  width: 20,
-                  height: 20,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  width: 22,
+                  height: 22,
                   margin: const EdgeInsets.symmetric(horizontal: 3),
                   decoration: BoxDecoration(
                     color: c.$2,
@@ -391,13 +677,26 @@ class _TextFormatToolbar extends ConsumerWidget {
                     border: Border.all(
                       color: currentColor == c.$1
                           ? AppColors.primary
-                          : Colors.grey.shade400,
+                          : (c.$2 == Colors.white
+                              ? (isDark
+                                  ? AppColors.toolbarDividerDark
+                                  : Colors.grey.shade300)
+                              : Colors.transparent),
                       width: currentColor == c.$1 ? 2.5 : 1,
                     ),
+                    boxShadow: currentColor == c.$1
+                        ? [
+                            BoxShadow(
+                              color: c.$2.withValues(alpha: 0.4),
+                              blurRadius: 6,
+                              spreadRadius: -1,
+                            ),
+                          ]
+                        : null,
                   ),
                   child: currentColor == c.$1
-                      ? Icon(Icons.check,
-                          size: 10,
+                      ? Icon(Icons.check_rounded,
+                          size: 12,
                           color: c.$1 == '#FFFFFF'
                               ? Colors.black54
                               : Colors.white)
@@ -405,45 +704,48 @@ class _TextFormatToolbar extends ConsumerWidget {
                 ),
               ),
             const Spacer(),
-            // Delete active text element.
-            IconButton(
-              icon: const Icon(Icons.delete_outline,
-                  size: 18, color: Colors.redAccent),
-              padding: EdgeInsets.zero,
-              constraints:
-                  const BoxConstraints(minWidth: 28, minHeight: 28),
-              onPressed: () => ref
-                  .read(canvasProvider(pageId).notifier)
-                  .deleteTextElement(activeEl.id),
-              tooltip: 'Delete text box',
+            // Delete active text element
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => ref
+                    .read(canvasProvider(pageId).notifier)
+                    .deleteTextElement(activeEl.id),
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.all(6),
+                  child: Icon(Icons.delete_outline_rounded,
+                      size: 18, color: AppColors.error),
+                ),
+              ),
             ),
           ],
         ],
       ),
     );
   }
-}
 
-/// A generic toolbar icon button.
-class _ToolbarButton extends StatelessWidget {
-  final IconData icon;
-  final Color? iconColor;
-  final VoidCallback? onPressed;
-  final String tooltip;
-
-  const _ToolbarButton({
-    required this.icon,
-    this.iconColor,
-    required this.onPressed,
-    required this.tooltip,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(
-      icon: Icon(icon, size: 22, color: iconColor),
-      onPressed: onPressed,
-      tooltip: tooltip,
+  Widget _miniIconButton(IconData icon, VoidCallback? onPressed, bool isDark) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(6),
+        child: Padding(
+          padding: const EdgeInsets.all(4),
+          child: Icon(
+            icon,
+            size: 16,
+            color: onPressed == null
+                ? (isDark
+                    ? AppColors.onSurfaceDark.withValues(alpha: 0.2)
+                    : AppColors.onSurfaceLight.withValues(alpha: 0.2))
+                : (isDark
+                    ? AppColors.onSurfaceDark.withValues(alpha: 0.7)
+                    : AppColors.onSurfaceLight.withValues(alpha: 0.6)),
+          ),
+        ),
+      ),
     );
   }
 }

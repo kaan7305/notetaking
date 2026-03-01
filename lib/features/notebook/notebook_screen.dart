@@ -40,24 +40,70 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
 
     return Scaffold(
       backgroundColor:
-          isDark ? AppColors.canvasBackgroundDark : Colors.grey.shade200,
+          isDark ? AppColors.canvasAreaDark : AppColors.canvasAreaLight,
       body: SafeArea(
         child: pagesAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('$e')),
+          loading: () => Center(
+            child: CircularProgressIndicator(
+              color: AppColors.primary,
+              strokeWidth: 2.5,
+            ),
+          ),
+          error: (e, _) => Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.error_outline_rounded,
+                    size: 48,
+                    color: isDark
+                        ? AppColors.onSurfaceDark.withValues(alpha: 0.3)
+                        : AppColors.onSurfaceLight.withValues(alpha: 0.3)),
+                const SizedBox(height: 12),
+                Text(
+                  '$e',
+                  style: TextStyle(
+                    color: isDark
+                        ? AppColors.onSurfaceDark.withValues(alpha: 0.5)
+                        : AppColors.onSurfaceLight.withValues(alpha: 0.5),
+                  ),
+                ),
+              ],
+            ),
+          ),
           data: (pages) {
             if (pages.isEmpty) {
-              return const Center(child: Text(AppStrings.noPages));
+              return Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.note_alt_outlined,
+                        size: 56,
+                        color: isDark
+                            ? AppColors.onSurfaceDark.withValues(alpha: 0.2)
+                            : AppColors.onSurfaceLight.withValues(alpha: 0.2)),
+                    const SizedBox(height: 12),
+                    Text(
+                      AppStrings.noPages,
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: isDark
+                            ? AppColors.onSurfaceDark.withValues(alpha: 0.4)
+                            : AppColors.onSurfaceLight.withValues(alpha: 0.4),
+                      ),
+                    ),
+                  ],
+                ),
+              );
             }
 
-            // Default to first page if no selection.
             final selectedId = _selectedPageId ?? pages.first.id;
-            final currentPage =
-                pages.firstWhere((p) => p.id == selectedId, orElse: () => pages.first);
+            final currentPage = pages.firstWhere(
+                (p) => p.id == selectedId,
+                orElse: () => pages.first);
 
             return Column(
               children: [
-                // Toolbar.
+                // Toolbar
                 NotebookToolbar(
                   pageId: currentPage.id,
                   onTogglePageSidebar: () {
@@ -69,22 +115,31 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
                   isAiPanelOpen: _showAiPanel,
                 ),
 
-                // Canvas + optional page sidebar.
+                // Canvas + optional page sidebar
                 Expanded(
                   child: Row(
                     children: [
-                      // Page sidebar.
-                      if (_showPageSidebar)
-                        PageSidebar(
-                          notebookId: widget.notebookId,
-                          selectedPageId: currentPage.id,
-                          onPageSelected: (pageId) {
-                            _saveCurrent(currentPage.id);
-                            setState(() => _selectedPageId = pageId);
-                          },
-                        ),
+                      // Page sidebar with animated width
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeOutCubic,
+                        width: _showPageSidebar
+                            ? AppDimensions.pageSidebarWidth
+                            : 0,
+                        child: _showPageSidebar
+                            ? PageSidebar(
+                                notebookId: widget.notebookId,
+                                selectedPageId: currentPage.id,
+                                onPageSelected: (pageId) {
+                                  _saveCurrent(currentPage.id);
+                                  setState(
+                                      () => _selectedPageId = pageId);
+                                },
+                              )
+                            : const SizedBox.shrink(),
+                      ),
 
-                      // Canvas area.
+                      // Canvas area
                       Expanded(
                         child: _CanvasArea(
                           key: ValueKey(currentPage.id),
@@ -92,7 +147,7 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
                         ),
                       ),
 
-                      // AI chat panel.
+                      // AI chat panel
                       if (_showAiPanel)
                         AiChatPanel(courseId: widget.courseId),
                     ],
@@ -112,7 +167,6 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
 
   @override
   void deactivate() {
-    // Force save when leaving screen.
     if (_selectedPageId != null) {
       _saveCurrent(_selectedPageId!);
     }
@@ -154,7 +208,6 @@ class _CanvasAreaState extends ConsumerState<_CanvasArea> {
         canvasState.currentTool == ToolType.eraser ||
         canvasState.currentTool == ToolType.lasso;
 
-    // Use letter size by default; could be made configurable per notebook.
     const pageSize = Size(
       AppDimensions.letterWidth,
       AppDimensions.letterHeight,
@@ -164,7 +217,7 @@ class _CanvasAreaState extends ConsumerState<_CanvasArea> {
       transformationController: _transformController,
       minScale: AppDimensions.canvasMinZoom,
       maxScale: AppDimensions.canvasMaxZoom,
-      boundaryMargin: const EdgeInsets.all(100),
+      boundaryMargin: const EdgeInsets.all(120),
       panEnabled: !isDrawingTool,
       scaleEnabled: !isDrawingTool,
       child: Center(
@@ -175,20 +228,29 @@ class _CanvasAreaState extends ConsumerState<_CanvasArea> {
             color: isDark
                 ? AppColors.canvasBackgroundDark
                 : _hexToColor(widget.page.backgroundColor),
+            borderRadius: BorderRadius.circular(4),
             boxShadow: [
               BoxShadow(
-                color: AppColors.pageShadow,
-                blurRadius: 12,
-                offset: const Offset(0, 2),
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 20,
+                offset: const Offset(0, 4),
+              ),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 6,
+                offset: const Offset(0, 1),
               ),
             ],
           ),
-          child: DrawingCanvas(
-            pageId: widget.page.id,
-            templateType: widget.page.templateType,
-            pageSize: pageSize,
-            backgroundColor: _hexToColor(widget.page.backgroundColor),
-            lineSpacing: widget.page.lineSpacing,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: DrawingCanvas(
+              pageId: widget.page.id,
+              templateType: widget.page.templateType,
+              pageSize: pageSize,
+              backgroundColor: _hexToColor(widget.page.backgroundColor),
+              lineSpacing: widget.page.lineSpacing,
+            ),
           ),
         ),
       ),

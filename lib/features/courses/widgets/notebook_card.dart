@@ -33,18 +33,25 @@ class _NotebookThumbnail extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final pagesAsync = ref.watch(pageProvider(notebookId));
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return pagesAsync.when(
-      loading: () => Container(color: Colors.grey.shade100),
-      error: (_, __) => Container(color: Colors.grey.shade100),
+      loading: () => Container(
+        color: isDark ? AppColors.cardDark : const Color(0xFFF4F5FA),
+      ),
+      error: (_, __) => Container(
+        color: isDark ? AppColors.cardDark : const Color(0xFFF4F5FA),
+      ),
       data: (pages) {
         if (pages.isEmpty) {
           return Container(
-            color: Colors.grey.shade100,
+            color: isDark ? AppColors.cardDark : const Color(0xFFF4F5FA),
             child: Center(
               child: Icon(
                 Icons.description_outlined,
                 size: 40,
-                color: Colors.grey.shade300,
+                color: isDark
+                    ? AppColors.onSurfaceDark.withValues(alpha: 0.15)
+                    : AppColors.onSurfaceLight.withValues(alpha: 0.15),
               ),
             ),
           );
@@ -235,6 +242,7 @@ class NotebookCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dateFormat = DateFormat.yMMMd();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
       onTap: () => _openNotebook(context),
@@ -242,13 +250,23 @@ class NotebookCard extends ConsumerWidget {
           _showContextMenu(context, ref, details.globalPosition),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          color: isDark ? AppColors.cardDark : AppColors.cardLight,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isDark
+                ? AppColors.cardBorderDark
+                : AppColors.cardBorderLight,
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
             ),
           ],
         ),
@@ -265,27 +283,42 @@ class NotebookCard extends ConsumerWidget {
             ),
 
             // Info strip
-            Padding(
-              padding: const EdgeInsets.all(10),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(
+                    color: isDark
+                        ? AppColors.cardBorderDark
+                        : AppColors.cardBorderLight,
+                    width: 1,
+                  ),
+                ),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     notebook.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: Colors.black87,
+                      letterSpacing: -0.2,
+                      color: isDark
+                          ? AppColors.onSurfaceDark
+                          : AppColors.onSurfaceLight,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 3),
                   Text(
                     dateFormat.format(notebook.updatedAt),
                     style: TextStyle(
                       fontSize: 11,
-                      color: Colors.grey.shade500,
+                      color: isDark
+                          ? AppColors.onSurfaceDark.withValues(alpha: 0.35)
+                          : AppColors.onSurfaceLight.withValues(alpha: 0.35),
                     ),
                   ),
                 ],

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import 'package:study_notebook/app/colors.dart';
 import 'package:study_notebook/core/models/models.dart';
 
 import 'canvas_notifier.dart';
@@ -74,7 +75,7 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
             _focusNode.requestFocus();
             final notifier = ref.read(canvasProvider(widget.pageId).notifier);
             if (canvasState.currentTool == ToolType.text) {
-              _createTextAt(event.localPosition, notifier, canvasState);
+              _handleTextTap(event.localPosition, notifier, canvasState);
               return;
             }
             // Lasso: tap outside to clear existing selection.
@@ -139,6 +140,7 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
                     key: ValueKey(el.id),
                     element: el,
                     isActive: el.id == canvasState.activeTextId,
+                    isSelected: canvasState.selectedTextIds.contains(el.id),
                     onChanged: (updated) {
                       ref
                           .read(canvasProvider(widget.pageId).notifier)
@@ -154,11 +156,17 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
                           .read(canvasProvider(widget.pageId).notifier)
                           .setActiveText(null);
                     },
+                    onDelete: () {
+                      ref
+                          .read(canvasProvider(widget.pageId).notifier)
+                          .deleteTextElement(el.id);
+                    },
                   ),
                 // Floating selection action menu.
                 if (canvasState.hasSelection && !canvasState.isSelecting)
                   _SelectionActionMenu(
-                    selectedCount: canvasState.selectedStrokeIds.length,
+                    selectedCount: canvasState.selectedStrokeIds.length +
+                        canvasState.selectedTextIds.length,
                     selectionBounds: _computeSelectionBounds(canvasState),
                     onDelete: () {
                       ref
@@ -189,8 +197,28 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
   );
   }
 
-  void _createTextAt(
+  void _handleTextTap(
       Offset position, CanvasNotifier notifier, CanvasState state) {
+    // Check if the tap hit an existing text box.
+    for (final el in state.textElements) {
+      final textRect = Rect.fromLTWH(el.x, el.y, el.width + 28, 40);
+      if (textRect.contains(position)) {
+        // Already active — don't re-set state so child widgets (delete btn)
+        // keep their gesture tracking and can handle the tap.
+        if (el.id == state.activeTextId) return;
+        // Tapped on an inactive text box — activate it.
+        notifier.setActiveText(el.id);
+        return;
+      }
+    }
+
+    // If there's an active text, deactivate it first instead of creating new.
+    if (state.activeTextId != null) {
+      notifier.setActiveText(null);
+      return;
+    }
+
+    // Create a new text box at the tapped position.
     final element = TextElement(
       id: const Uuid().v4(),
       pageId: widget.pageId,
@@ -235,6 +263,14 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
       }
     }
 
+    for (final el in canvasState.textElements) {
+      if (!canvasState.selectedTextIds.contains(el.id)) continue;
+      if (el.x < minX) minX = el.x;
+      if (el.y < minY) minY = el.y;
+      if (el.x + el.width > maxX) maxX = el.x + el.width;
+      if (el.y + 30 > maxY) maxY = el.y + 30;
+    }
+
     if (minX == double.infinity) return Rect.zero;
     return Rect.fromLTRB(minX, minY, maxX, maxY);
   }
@@ -254,34 +290,89 @@ class _SelectionActionMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final menuY = (selectionBounds.top - 50).clamp(0.0, double.infinity);
-    final menuX = (selectionBounds.center.dx - 60).clamp(0.0, double.infinity);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final menuY = (selectionBounds.top - 54).clamp(0.0, double.infinity);
+    final menuX = (selectionBounds.center.dx - 70).clamp(0.0, double.infinity);
 
     return Positioned(
       left: menuX,
       top: menuY,
       child: Material(
-        elevation: 4,
-        borderRadius: BorderRadius.circular(8),
+        elevation: 0,
+        color: Colors.transparent,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey.shade300),
+            color: isDark ? AppColors.cardDark : AppColors.cardLight,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isDark
+                  ? AppColors.cardBorderDark
+                  : AppColors.cardBorderLight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.12),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 4,
+                offset: const Offset(0, 1),
+              ),
+            ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('$selectedCount selected',
-                  style: const TextStyle(fontSize: 12, color: Colors.black87)),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '$selectedCount',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'selected',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: isDark
+                      ? AppColors.onSurfaceDark.withValues(alpha: 0.6)
+                      : AppColors.onSurfaceLight.withValues(alpha: 0.5),
+                ),
+              ),
               const SizedBox(width: 8),
-              IconButton(
-                icon: const Icon(Icons.delete, size: 20, color: Colors.redAccent),
-                onPressed: onDelete,
-                tooltip: 'Delete selected',
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              Container(
+                width: 1,
+                height: 16,
+                color: isDark
+                    ? AppColors.cardBorderDark
+                    : AppColors.cardBorderLight,
+              ),
+              const SizedBox(width: 4),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: onDelete,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: Icon(Icons.delete_outline_rounded,
+                        size: 18, color: AppColors.error),
+                  ),
+                ),
               ),
             ],
           ),
@@ -295,17 +386,21 @@ class _SelectionActionMenu extends StatelessWidget {
 class _TextBox extends StatefulWidget {
   final TextElement element;
   final bool isActive;
+  final bool isSelected;
   final ValueChanged<TextElement> onChanged;
   final VoidCallback onTap;
   final VoidCallback onDeactivate;
+  final VoidCallback onDelete;
 
   const _TextBox({
     super.key,
     required this.element,
     required this.isActive,
+    this.isSelected = false,
     required this.onChanged,
     required this.onTap,
     required this.onDeactivate,
+    required this.onDelete,
   });
 
   @override
@@ -326,7 +421,7 @@ class _TextBoxState extends State<_TextBox> {
           (_) => _focus.requestFocus());
     }
     _focus.addListener(() {
-      if (!_focus.hasFocus) widget.onDeactivate();
+      if (!_focus.hasFocus && widget.isActive) widget.onDeactivate();
     });
   }
 
@@ -362,46 +457,95 @@ class _TextBoxState extends State<_TextBox> {
     }
   }
 
+  BoxDecoration? get _boxDecoration {
+    if (widget.isActive) {
+      return BoxDecoration(
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.5),
+          width: 1.5,
+        ),
+        borderRadius: BorderRadius.circular(6),
+        color: AppColors.primary.withValues(alpha: 0.03),
+      );
+    }
+    if (widget.isSelected) {
+      return BoxDecoration(
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.7),
+          width: 2,
+        ),
+        borderRadius: BorderRadius.circular(6),
+        color: AppColors.primary.withValues(alpha: 0.06),
+      );
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Positioned(
       left: widget.element.x,
       top: widget.element.y,
-      width: widget.element.width,
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: Container(
-          decoration: widget.isActive
-              ? BoxDecoration(
-                  border: Border.all(
-                    color: Colors.blue.withValues(alpha: 0.6),
-                    width: 1,
+      width: widget.element.width + (widget.isActive ? 28 : 0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Text field area — tappable to activate
+          Expanded(
+            child: GestureDetector(
+              onTap: widget.onTap,
+              child: Container(
+                decoration: _boxDecoration,
+                child: TextField(
+                  controller: _ctrl,
+                  focusNode: _focus,
+                  maxLines: null,
+                  style: TextStyle(
+                    fontSize: widget.element.fontSize,
+                    color: _textColor,
+                    fontFamily: widget.element.fontFamily == 'system'
+                        ? null
+                        : widget.element.fontFamily,
                   ),
-                  borderRadius: BorderRadius.circular(2),
-                )
-              : null,
-          child: TextField(
-            controller: _ctrl,
-            focusNode: _focus,
-            maxLines: null,
-            style: TextStyle(
-              fontSize: widget.element.fontSize,
-              color: _textColor,
-              fontFamily: widget.element.fontFamily == 'system'
-                  ? null
-                  : widget.element.fontFamily,
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.all(4),
+                    hintText: 'Type here...',
+                  ),
+                  onChanged: (text) {
+                    widget.onChanged(widget.element.copyWith(content: text));
+                  },
+                ),
+              ),
             ),
-            decoration: const InputDecoration(
-              border: InputBorder.none,
-              isDense: true,
-              contentPadding: EdgeInsets.all(4),
-              hintText: 'Type here...',
-            ),
-            onChanged: (text) {
-              widget.onChanged(widget.element.copyWith(content: text));
-            },
           ),
-        ),
+          // Delete button — separate gesture zone, only visible when active
+          if (widget.isActive)
+            GestureDetector(
+              onTap: widget.onDelete,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 2),
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: AppColors.error.withValues(alpha: 0.4),
+                      width: 1,
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.close_rounded,
+                    size: 14,
+                    color: AppColors.error,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

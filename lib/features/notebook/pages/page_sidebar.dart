@@ -30,52 +30,91 @@ class PageSidebar extends ConsumerWidget {
     return Container(
       width: AppDimensions.pageSidebarWidth,
       decoration: BoxDecoration(
-        color: isDark ? AppColors.sidebarBackground : Colors.grey.shade100,
+        color: isDark
+            ? AppColors.sidebarBackground
+            : AppColors.sidebarBackgroundLight,
         border: Border(
-          right: BorderSide(color: AppColors.toolbarDivider, width: 0.5),
+          right: BorderSide(
+            color: isDark
+                ? AppColors.toolbarDividerDark
+                : AppColors.toolbarDivider,
+            width: 1,
+          ),
         ),
       ),
       child: Column(
         children: [
-          // Header.
+          // Header
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.fromLTRB(16, 14, 10, 14),
             child: Row(
               children: [
                 Text(
-                  AppStrings.notebooks,
+                  'Pages',
                   style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? AppColors.sidebarText : null,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.2,
+                    color: isDark
+                        ? AppColors.onSurfaceDark.withValues(alpha: 0.7)
+                        : AppColors.onSurfaceLight.withValues(alpha: 0.7),
                   ),
                 ),
                 const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.add, size: 20),
-                  onPressed: () {
-                    ref.read(pageProvider(notebookId).notifier).addPage();
-                  },
-                  tooltip: 'Add Page',
-                  iconSize: 20,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 32,
-                    minHeight: 32,
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      ref.read(pageProvider(notebookId).notifier).addPage();
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF252838)
+                            : const Color(0xFFEEF0F6),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.add_rounded,
+                        size: 18,
+                        color: isDark
+                            ? AppColors.onSurfaceDark.withValues(alpha: 0.6)
+                            : AppColors.onSurfaceLight.withValues(alpha: 0.5),
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          const Divider(height: 1),
+          Container(
+            height: 1,
+            color: isDark
+                ? AppColors.toolbarDividerDark
+                : AppColors.toolbarDivider,
+          ),
 
-          // Page list.
+          // Page list
           Expanded(
             child: pagesAsync.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(),
+              loading: () => Center(
+                child: CircularProgressIndicator(
+                  color: AppColors.primary,
+                  strokeWidth: 2,
+                ),
               ),
               error: (e, _) => Center(
-                child: Text('Error: $e'),
+                child: Text(
+                  'Error: $e',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark
+                        ? AppColors.onSurfaceDark.withValues(alpha: 0.4)
+                        : AppColors.onSurfaceLight.withValues(alpha: 0.4),
+                  ),
+                ),
               ),
               data: (pages) {
                 if (pages.isEmpty) {
@@ -83,13 +122,16 @@ class PageSidebar extends ConsumerWidget {
                     child: Text(
                       AppStrings.noPages,
                       style: TextStyle(
-                        color: isDark ? AppColors.sidebarText : Colors.grey,
+                        fontSize: 13,
+                        color: isDark
+                            ? AppColors.onSurfaceDark.withValues(alpha: 0.3)
+                            : AppColors.onSurfaceLight.withValues(alpha: 0.3),
                       ),
                     ),
                   );
                 }
                 return ListView.builder(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
                   itemCount: pages.length,
                   itemBuilder: (context, index) {
                     final page = pages[index];
@@ -137,27 +179,46 @@ class _PageThumbnail extends ConsumerWidget {
 
     return GestureDetector(
       onTap: onTap,
-      onLongPress: onDelete != null
-          ? () => _showContextMenu(context)
-          : null,
-      child: Container(
+      onLongPress: onDelete != null ? () => _showContextMenu(context) : null,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(
           border: Border.all(
-            color: isSelected ? AppColors.primary : Colors.grey.shade300,
+            color: isSelected
+                ? AppColors.primary
+                : (isDark
+                    ? AppColors.cardBorderDark
+                    : AppColors.cardBorderLight),
             width: isSelected ? 2 : 1,
           ),
-          borderRadius: BorderRadius.circular(6),
-          color: isDark ? Colors.grey.shade800 : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          color: isDark ? AppColors.cardDark : AppColors.cardLight,
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.15),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
         ),
         child: Column(
           children: [
-            // Thumbnail area — renders actual strokes scaled down.
+            // Thumbnail area
             AspectRatio(
-              aspectRatio: AppDimensions.letterWidth / AppDimensions.letterHeight,
+              aspectRatio:
+                  AppDimensions.letterWidth / AppDimensions.letterHeight,
               child: ClipRRect(
                 borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(5)),
+                    const BorderRadius.vertical(top: Radius.circular(9)),
                 child: FittedBox(
                   fit: BoxFit.contain,
                   alignment: Alignment.topLeft,
@@ -166,22 +227,17 @@ class _PageThumbnail extends ConsumerWidget {
                     height: AppDimensions.letterHeight,
                     child: Stack(
                       children: [
-                        // Background color.
                         Container(color: _hexToColor(page.backgroundColor)),
-                        // Template lines.
                         CustomPaint(
-                          size: Size(
-                              AppDimensions.letterWidth,
+                          size: Size(AppDimensions.letterWidth,
                               AppDimensions.letterHeight),
                           painter: PageBackgroundPainter(
                             templateType: page.templateType,
                             lineSpacing: page.lineSpacing,
                           ),
                         ),
-                        // Strokes.
                         CustomPaint(
-                          size: Size(
-                              AppDimensions.letterWidth,
+                          size: Size(AppDimensions.letterWidth,
                               AppDimensions.letterHeight),
                           painter: StrokePainter(
                             strokes: canvasState.strokes,
@@ -194,15 +250,19 @@ class _PageThumbnail extends ConsumerWidget {
                 ),
               ),
             ),
-            // Page number.
+            // Page number
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: 6),
               child: Text(
                 '${page.pageNumber}',
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  color: isDark ? AppColors.sidebarText : null,
+                  fontSize: 11,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected
+                      ? AppColors.primary
+                      : (isDark
+                          ? AppColors.onSurfaceDark.withValues(alpha: 0.5)
+                          : AppColors.onSurfaceLight.withValues(alpha: 0.45)),
                 ),
               ),
             ),
@@ -219,6 +279,7 @@ class _PageThumbnail extends ConsumerWidget {
   }
 
   void _showContextMenu(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
       builder: (_) => SafeArea(
@@ -226,8 +287,17 @@ class _PageThumbnail extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text('Delete Page'),
+              leading: Icon(Icons.delete_outline_rounded,
+                  color: AppColors.error),
+              title: Text(
+                'Delete Page',
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  color: isDark
+                      ? AppColors.onSurfaceDark
+                      : AppColors.onSurfaceLight,
+                ),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 onDelete?.call();

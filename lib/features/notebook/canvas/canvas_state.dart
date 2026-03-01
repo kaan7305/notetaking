@@ -8,6 +8,7 @@ class CanvasState {
   final List<TextElement> textElements;
   final String? activeTextId;
   final Set<String> selectedStrokeIds;
+  final Set<String> selectedTextIds;
   final ToolType currentTool;
   final Color currentColor;
   final double strokeWidth;
@@ -30,6 +31,7 @@ class CanvasState {
     this.textElements = const [],
     this.activeTextId,
     this.selectedStrokeIds = const {},
+    this.selectedTextIds = const {},
     this.currentTool = ToolType.pen,
     this.currentColor = const Color(0xFF000000),
     this.strokeWidth = 2.0,
@@ -62,7 +64,8 @@ class CanvasState {
 
   bool get canUndo => undoStack.isNotEmpty;
   bool get canRedo => redoStack.isNotEmpty;
-  bool get hasSelection => selectedStrokeIds.isNotEmpty;
+  bool get hasSelection =>
+      selectedStrokeIds.isNotEmpty || selectedTextIds.isNotEmpty;
 
   CanvasState copyWith({
     List<Stroke>? strokes,
@@ -70,6 +73,7 @@ class CanvasState {
     List<TextElement>? textElements,
     String? Function()? activeTextId,
     Set<String>? selectedStrokeIds,
+    Set<String>? selectedTextIds,
     ToolType? currentTool,
     Color? currentColor,
     double? strokeWidth,
@@ -93,6 +97,7 @@ class CanvasState {
       textElements: textElements ?? this.textElements,
       activeTextId: activeTextId != null ? activeTextId() : this.activeTextId,
       selectedStrokeIds: selectedStrokeIds ?? this.selectedStrokeIds,
+      selectedTextIds: selectedTextIds ?? this.selectedTextIds,
       currentTool: currentTool ?? this.currentTool,
       currentColor: currentColor ?? this.currentColor,
       strokeWidth: strokeWidth ?? this.strokeWidth,

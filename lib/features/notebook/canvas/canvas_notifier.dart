@@ -51,6 +51,7 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
     state = state.copyWith(
       currentTool: tool,
       selectedStrokeIds: {},
+      selectedTextIds: {},
       selectionLassoPoints: () => null,
       selectionRect: () => null,
       isSelecting: false,
@@ -262,11 +263,17 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
     final newStrokes = state.strokes
         .where((s) => !state.selectedStrokeIds.contains(s.id))
         .toList();
+    final newTexts = state.textElements
+        .where((t) => !state.selectedTextIds.contains(t.id))
+        .toList();
     state = state.copyWith(
       strokes: newStrokes,
+      textElements: newTexts,
       selectedStrokeIds: {},
+      selectedTextIds: {},
       selectionLassoPoints: () => null,
       selectionRect: () => null,
+      activeTextId: () => null,
       redoStack: [],
     );
     _markDirty();
@@ -280,6 +287,7 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
         selectionLassoPoints: () => [position],
         selectionRect: () => null,
         selectedStrokeIds: {},
+        selectedTextIds: {},
         isSelecting: true,
       );
     } else {
@@ -287,6 +295,7 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
         selectionRect: () => Rect.fromPoints(position, position),
         selectionLassoPoints: () => null,
         selectedStrokeIds: {},
+        selectedTextIds: {},
         isSelecting: true,
       );
     }
@@ -306,6 +315,7 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
 
   void _finalizeSelection() {
     final selectedIds = <String>{};
+    final selectedTexts = <String>{};
 
     if (state.selectionMode == SelectionMode.freeform) {
       final lassoPoints = state.selectionLassoPoints;
@@ -330,6 +340,14 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
             selectedIds.add(stroke.id);
             break;
           }
+        }
+      }
+
+      // Also check text elements.
+      for (final el in state.textElements) {
+        final center = Offset(el.x + el.width / 2, el.y + 10);
+        if (path.contains(Offset(el.x, el.y)) || path.contains(center)) {
+          selectedTexts.add(el.id);
         }
       }
     } else {
@@ -357,10 +375,19 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
           }
         }
       }
+
+      // Also check text elements.
+      for (final el in state.textElements) {
+        final textRect = Rect.fromLTWH(el.x, el.y, el.width, 30);
+        if (normalizedRect.overlaps(textRect)) {
+          selectedTexts.add(el.id);
+        }
+      }
     }
 
     state = state.copyWith(
       selectedStrokeIds: selectedIds,
+      selectedTextIds: selectedTexts,
       isSelecting: false,
     );
   }
@@ -368,6 +395,7 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
   void clearSelection() {
     state = state.copyWith(
       selectedStrokeIds: {},
+      selectedTextIds: {},
       selectionLassoPoints: () => null,
       selectionRect: () => null,
       isSelecting: false,
