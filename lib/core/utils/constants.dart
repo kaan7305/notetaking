@@ -18,6 +18,8 @@ double estimateTextBoxHeight(TextElement el) {
     style: TextStyle(
       fontSize: el.fontSize,
       fontFamily: el.fontFamily == 'system' ? null : el.fontFamily,
+      fontWeight: el.isBold ? FontWeight.bold : FontWeight.normal,
+      fontStyle: el.isItalic ? FontStyle.italic : FontStyle.normal,
     ),
   );
   final painter = TextPainter(

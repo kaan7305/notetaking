@@ -674,6 +674,44 @@ class _TextFormatToolbar extends ConsumerWidget {
                   : AppColors.toolbarDivider,
             ),
             const SizedBox(width: 10),
+            // Bold / Italic toggles in a pill
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF252838) : const Color(0xFFEEF0F6),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  _FormatToggleButton(
+                    label: 'B',
+                    isActive: activeEl?.isBold ?? false,
+                    isBoldLabel: true,
+                    onTap: () =>
+                        updateEl((el) => el.copyWith(isBold: !el.isBold)),
+                    isDark: isDark,
+                  ),
+                  const SizedBox(width: 2),
+                  _FormatToggleButton(
+                    label: 'I',
+                    isActive: activeEl?.isItalic ?? false,
+                    isBoldLabel: false,
+                    onTap: () =>
+                        updateEl((el) => el.copyWith(isItalic: !el.isItalic)),
+                    isDark: isDark,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            Container(
+              width: 1,
+              height: 20,
+              color: isDark
+                  ? AppColors.toolbarDividerDark
+                  : AppColors.toolbarDivider,
+            ),
+            const SizedBox(width: 10),
             // Color swatches
             for (final c in _colorOptions)
               GestureDetector(
@@ -752,6 +790,55 @@ class _TextFormatToolbar extends ConsumerWidget {
                 ? (isDark
                     ? AppColors.onSurfaceDark.withValues(alpha: 0.2)
                     : AppColors.onSurfaceLight.withValues(alpha: 0.2))
+                : (isDark
+                    ? AppColors.onSurfaceDark.withValues(alpha: 0.7)
+                    : AppColors.onSurfaceLight.withValues(alpha: 0.6)),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A toggle button for Bold / Italic text formatting.
+class _FormatToggleButton extends StatelessWidget {
+  final String label;
+  final bool isActive;
+  final bool isBoldLabel;
+  final VoidCallback onTap;
+  final bool isDark;
+
+  const _FormatToggleButton({
+    required this.label,
+    required this.isActive,
+    required this.isBoldLabel,
+    required this.onTap,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          color: isActive
+              ? (isDark ? AppColors.toolbarActiveDark : AppColors.primary)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: isBoldLabel ? FontWeight.w900 : FontWeight.w500,
+            fontStyle: isBoldLabel ? FontStyle.normal : FontStyle.italic,
+            color: isActive
+                ? Colors.white
                 : (isDark
                     ? AppColors.onSurfaceDark.withValues(alpha: 0.7)
                     : AppColors.onSurfaceLight.withValues(alpha: 0.6)),

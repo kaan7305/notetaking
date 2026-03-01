@@ -21,6 +21,8 @@ class TextElementDao {
         'font_size': el.fontSize,
         'font_family': el.fontFamily,
         'color': el.color,
+        'is_bold': el.isBold ? 1 : 0,
+        'is_italic': el.isItalic ? 1 : 0,
         'created_at': el.createdAt.millisecondsSinceEpoch,
         'is_deleted': el.isDeleted ? 1 : 0,
       };
@@ -35,6 +37,8 @@ class TextElementDao {
         fontSize: (map['font_size'] as num?)?.toDouble() ?? 16.0,
         fontFamily: map['font_family'] as String? ?? 'system',
         color: map['color'] as String? ?? '#000000',
+        isBold: (map['is_bold'] as int? ?? 0) == 1,
+        isItalic: (map['is_italic'] as int? ?? 0) == 1,
         createdAt:
             DateTime.fromMillisecondsSinceEpoch(map['created_at'] as int),
         isDeleted: (map['is_deleted'] as int) == 1,

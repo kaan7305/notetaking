@@ -74,6 +74,8 @@ class DatabaseTables {
       font_size REAL DEFAULT 16.0,
       font_family TEXT DEFAULT 'system',
       color TEXT DEFAULT '#000000',
+      is_bold INTEGER DEFAULT 0,
+      is_italic INTEGER DEFAULT 0,
       created_at INTEGER NOT NULL,
       is_deleted INTEGER DEFAULT 0
     )

@@ -22,11 +22,12 @@ import 'package:sqflite/sqflite.dart';
 /// | 1       | Initial schema: courses, notebooks, pages, strokes, text_elements, documents, ai_messages |
 /// | 2       | `pages`: added `background_color TEXT DEFAULT '#FFFFFF'`, `line_spacing REAL DEFAULT 32.0` |
 /// | 3       | `strokes`: added `pen_style TEXT DEFAULT 'standard'` |
+/// | 4       | `text_elements`: added `is_bold INTEGER DEFAULT 0`, `is_italic INTEGER DEFAULT 0` |
 class DatabaseMigrations {
   DatabaseMigrations._();
 
   /// The current schema version.  Bump this when adding a new migration.
-  static const int currentVersion = 3;
+  static const int currentVersion = 4;
 
   /// Map of target-version → ordered list of SQL statements to apply.
   ///
@@ -39,6 +40,10 @@ class DatabaseMigrations {
     ],
     3: [
       "ALTER TABLE strokes ADD COLUMN pen_style TEXT DEFAULT 'standard'",
+    ],
+    4: [
+      'ALTER TABLE text_elements ADD COLUMN is_bold INTEGER DEFAULT 0',
+      'ALTER TABLE text_elements ADD COLUMN is_italic INTEGER DEFAULT 0',
     ],
   };
 

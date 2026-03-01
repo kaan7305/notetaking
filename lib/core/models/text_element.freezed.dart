@@ -30,6 +30,8 @@ mixin _$TextElement {
   double get fontSize => throw _privateConstructorUsedError;
   String get fontFamily => throw _privateConstructorUsedError;
   String get color => throw _privateConstructorUsedError;
+  bool get isBold => throw _privateConstructorUsedError;
+  bool get isItalic => throw _privateConstructorUsedError;
   DateTime get createdAt => throw _privateConstructorUsedError;
   bool get isDeleted => throw _privateConstructorUsedError;
 
@@ -60,6 +62,8 @@ abstract class $TextElementCopyWith<$Res> {
     double fontSize,
     String fontFamily,
     String color,
+    bool isBold,
+    bool isItalic,
     DateTime createdAt,
     bool isDeleted,
   });
@@ -89,6 +93,8 @@ class _$TextElementCopyWithImpl<$Res, $Val extends TextElement>
     Object? fontSize = null,
     Object? fontFamily = null,
     Object? color = null,
+    Object? isBold = null,
+    Object? isItalic = null,
     Object? createdAt = null,
     Object? isDeleted = null,
   }) {
@@ -130,6 +136,14 @@ class _$TextElementCopyWithImpl<$Res, $Val extends TextElement>
                 ? _value.color
                 : color // ignore: cast_nullable_to_non_nullable
                       as String,
+            isBold: null == isBold
+                ? _value.isBold
+                : isBold // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            isItalic: null == isItalic
+                ? _value.isItalic
+                : isItalic // ignore: cast_nullable_to_non_nullable
+                      as bool,
             createdAt: null == createdAt
                 ? _value.createdAt
                 : createdAt // ignore: cast_nullable_to_non_nullable
@@ -163,6 +177,8 @@ abstract class _$$TextElementImplCopyWith<$Res>
     double fontSize,
     String fontFamily,
     String color,
+    bool isBold,
+    bool isItalic,
     DateTime createdAt,
     bool isDeleted,
   });
@@ -191,6 +207,8 @@ class __$$TextElementImplCopyWithImpl<$Res>
     Object? fontSize = null,
     Object? fontFamily = null,
     Object? color = null,
+    Object? isBold = null,
+    Object? isItalic = null,
     Object? createdAt = null,
     Object? isDeleted = null,
   }) {
@@ -232,6 +250,14 @@ class __$$TextElementImplCopyWithImpl<$Res>
             ? _value.color
             : color // ignore: cast_nullable_to_non_nullable
                   as String,
+        isBold: null == isBold
+            ? _value.isBold
+            : isBold // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        isItalic: null == isItalic
+            ? _value.isItalic
+            : isItalic // ignore: cast_nullable_to_non_nullable
+                  as bool,
         createdAt: null == createdAt
             ? _value.createdAt
             : createdAt // ignore: cast_nullable_to_non_nullable
@@ -258,6 +284,8 @@ class _$TextElementImpl implements _TextElement {
     this.fontSize = 16.0,
     this.fontFamily = 'system',
     this.color = '#000000',
+    this.isBold = false,
+    this.isItalic = false,
     required this.createdAt,
     this.isDeleted = false,
   });
@@ -287,6 +315,12 @@ class _$TextElementImpl implements _TextElement {
   @JsonKey()
   final String color;
   @override
+  @JsonKey()
+  final bool isBold;
+  @override
+  @JsonKey()
+  final bool isItalic;
+  @override
   final DateTime createdAt;
   @override
   @JsonKey()
@@ -294,7 +328,7 @@ class _$TextElementImpl implements _TextElement {
 
   @override
   String toString() {
-    return 'TextElement(id: $id, pageId: $pageId, content: $content, x: $x, y: $y, width: $width, fontSize: $fontSize, fontFamily: $fontFamily, color: $color, createdAt: $createdAt, isDeleted: $isDeleted)';
+    return 'TextElement(id: $id, pageId: $pageId, content: $content, x: $x, y: $y, width: $width, fontSize: $fontSize, fontFamily: $fontFamily, color: $color, isBold: $isBold, isItalic: $isItalic, createdAt: $createdAt, isDeleted: $isDeleted)';
   }
 
   @override
@@ -313,6 +347,8 @@ class _$TextElementImpl implements _TextElement {
             (identical(other.fontFamily, fontFamily) ||
                 other.fontFamily == fontFamily) &&
             (identical(other.color, color) || other.color == color) &&
+            (identical(other.isBold, isBold) || other.isBold == isBold) &&
+            (identical(other.isItalic, isItalic) || other.isItalic == isItalic) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.isDeleted, isDeleted) ||
@@ -332,6 +368,8 @@ class _$TextElementImpl implements _TextElement {
     fontSize,
     fontFamily,
     color,
+    isBold,
+    isItalic,
     createdAt,
     isDeleted,
   );
@@ -361,6 +399,8 @@ abstract class _TextElement implements TextElement {
     final double fontSize,
     final String fontFamily,
     final String color,
+    final bool isBold,
+    final bool isItalic,
     required final DateTime createdAt,
     final bool isDeleted,
   }) = _$TextElementImpl;
@@ -386,6 +426,10 @@ abstract class _TextElement implements TextElement {
   String get fontFamily;
   @override
   String get color;
+  @override
+  bool get isBold;
+  @override
+  bool get isItalic;
   @override
   DateTime get createdAt;
   @override

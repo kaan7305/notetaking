@@ -913,6 +913,8 @@ class _TextBoxState extends State<_TextBox> {
         fontFamily: widget.element.fontFamily == 'system'
             ? null
             : widget.element.fontFamily,
+        fontWeight: widget.element.isBold ? FontWeight.bold : FontWeight.normal,
+        fontStyle: widget.element.isItalic ? FontStyle.italic : FontStyle.normal,
       ),
       decoration: const InputDecoration(
         border: InputBorder.none,

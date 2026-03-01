@@ -17,6 +17,8 @@ _$TextElementImpl _$$TextElementImplFromJson(Map<String, dynamic> json) =>
       fontSize: (json['fontSize'] as num?)?.toDouble() ?? 16.0,
       fontFamily: json['fontFamily'] as String? ?? 'system',
       color: json['color'] as String? ?? '#000000',
+      isBold: json['isBold'] as bool? ?? false,
+      isItalic: json['isItalic'] as bool? ?? false,
       createdAt: DateTime.parse(json['createdAt'] as String),
       isDeleted: json['isDeleted'] as bool? ?? false,
     );
@@ -32,6 +34,8 @@ Map<String, dynamic> _$$TextElementImplToJson(_$TextElementImpl instance) =>
       'fontSize': instance.fontSize,
       'fontFamily': instance.fontFamily,
       'color': instance.color,
+      'isBold': instance.isBold,
+      'isItalic': instance.isItalic,
       'createdAt': instance.createdAt.toIso8601String(),
       'isDeleted': instance.isDeleted,
     };
