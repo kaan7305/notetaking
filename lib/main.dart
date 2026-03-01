@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app/config.dart';
 import 'app/router.dart';
 import 'app/theme.dart';
+import 'core/providers/sync_provider.dart';
 import 'core/providers/theme_provider.dart';
 import 'core/utils/app_logger.dart';
 import 'core/widgets/offline_banner.dart';
@@ -42,6 +43,9 @@ class StudyNotebookApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeSettingProvider);
+    // Eagerly activate the sync provider so it monitors connectivity and
+    // queues unsynced rows even before the Settings screen is visited.
+    ref.watch(syncProvider);
 
     return MaterialApp.router(
       title: 'StudyNotebook',

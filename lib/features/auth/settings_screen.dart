@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:study_notebook/app/colors.dart';
+import 'package:study_notebook/core/providers/sync_provider.dart';
 import 'package:study_notebook/core/providers/theme_provider.dart';
 import 'package:study_notebook/core/utils/constants.dart';
 import 'package:study_notebook/features/auth/auth_provider.dart';
@@ -66,6 +67,13 @@ class SettingsScreen extends ConsumerWidget {
           // Appearance section.
           const _SectionHeader(title: 'Appearance'),
           _ThemeTile(),
+
+          // Sync section — only for authenticated (non-demo) users.
+          if (authState is AuthAuthenticated) ...[
+            const SizedBox(height: 24),
+            const _SectionHeader(title: 'Sync'),
+            _SyncTile(),
+          ],
 
           const SizedBox(height: 24),
 
@@ -166,6 +174,93 @@ class _SettingsTile extends StatelessWidget {
         onTap: onTap,
       ),
     );
+  }
+}
+
+/// Shows sync status and exposes a manual sync button for authenticated users.
+class _SyncTile extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sync = ref.watch(syncProvider);
+    final notifier = ref.read(syncProvider.notifier);
+    final colorScheme = Theme.of(context).colorScheme;
+
+    final (icon, iconColor, statusText) = switch (sync.status) {
+      SyncStatus.syncing => (
+          const SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          colorScheme.primary,
+          'Syncing…',
+        ),
+      SyncStatus.success => (
+          const Icon(Icons.cloud_done_outlined, size: 20),
+          Colors.green,
+          sync.lastSyncedAt != null
+              ? 'Last synced ${_formatTime(sync.lastSyncedAt!)}'
+              : 'Up to date',
+        ),
+      SyncStatus.error => (
+          const Icon(Icons.cloud_off_outlined, size: 20),
+          colorScheme.error,
+          sync.errorMessage ?? 'Sync failed',
+        ),
+      _ => (
+          const Icon(Icons.cloud_upload_outlined, size: 20),
+          colorScheme.onSurfaceVariant,
+          sync.pendingCount > 0
+              ? '${sync.pendingCount} item${sync.pendingCount == 1 ? '' : 's'} pending'
+              : 'Up to date',
+        ),
+    };
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            IconTheme(
+              data: IconThemeData(color: iconColor, size: 20),
+              child: icon,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Cloud Sync',
+                      style: Theme.of(context).textTheme.bodyMedium),
+                  const SizedBox(height: 2),
+                  Text(
+                    statusText,
+                    style: TextStyle(fontSize: 12, color: iconColor),
+                  ),
+                ],
+              ),
+            ),
+            if (sync.status != SyncStatus.syncing)
+              TextButton(
+                onPressed: notifier.sync,
+                child: const Text('Sync now'),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static String _formatTime(DateTime dt) {
+    final now = DateTime.now();
+    final diff = now.difference(dt);
+    if (diff.inSeconds < 60) return 'just now';
+    if (diff.inMinutes < 60) {
+      final m = diff.inMinutes;
+      return '$m min${m == 1 ? '' : 's'} ago';
+    }
+    final h = diff.inHours;
+    return '$h hr${h == 1 ? '' : 's'} ago';
   }
 }
 

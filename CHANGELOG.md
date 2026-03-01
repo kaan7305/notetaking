@@ -1,4 +1,13 @@
 
+## 2026-03-01 (cycle 23 — offline sync wired + Settings sync tile)
+
+### Added
+- **Offline sync mechanism fully activated** (`main.dart`, `sync_provider.dart`, `settings_screen.dart`, `providers.dart`):
+  - `syncProvider` is now eagerly `watch`ed in `StudyNotebookApp.build()` so the notifier is alive for the entire app session — previously it was defined but never consumed, meaning no sync ever occurred.
+  - `SyncNotifier` (already complete) watches `isOfflineProvider` via `ref.listen` and calls `sync()` automatically when the device transitions from offline → online. It upserts unsynced courses, notebooks, pages, and documents to Supabase using `is_synced = 0` rows and marks each one synced after a successful push.
+  - **`_SyncTile`** widget added to the Settings screen (visible only for `AuthAuthenticated` users). Shows a contextual icon + colour for each sync state: cloud-upload (idle), spinner (syncing), cloud-done/green (success), cloud-off/error (error). The subtitle reports pending count when idle, elapsed time since last sync when successful, or the error message when failed. A **"Sync now"** `TextButton` triggers a manual sync; it is hidden while syncing is in progress.
+  - `sync_provider.dart` exported from the `providers.dart` barrel.
+
 ## 2026-03-01 (cycle 21 — document viewer page jump + snippet highlight)
 
 ### Added

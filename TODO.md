@@ -22,7 +22,7 @@
 - [x] 2026-03-01: Quiz keyboard shortcuts — A/B/C/D select answer options, Space/Enter advances to next question; `_QuestionView` converted to `StatefulWidget` with `FocusNode` (auto-focused on mount); keyboard hint label below options switches text between "A / B / C / D to select" and "Space / Enter → Next Question"
 
 ## Potential future tasks
-- [ ] Offline sync mechanism — implement `SyncProvider` that queues is_synced=0 rows and pushes to Supabase on reconnect
+- [x] 2026-03-01: Offline sync mechanism — `SyncNotifier` queues `is_synced=0` rows (courses, notebooks, pages, documents) and pushes to Supabase automatically when the device comes back online; `syncProvider` eagerly activated in `StudyNotebookApp`; `_SyncTile` in Settings shows status, pending count, last-synced timestamp, and a manual "Sync now" button (authenticated users only)
 - [x] 2026-03-01: Document viewer: highlight the snippet referenced by AI source citations — `DocumentViewerScreen` now accepts a `snippet` param; `PdfViewerController.goToPage` scrolls to `initialPage`; `PdfTextSearcher.startTextSearch` highlights all occurrences with yellow/orange fill; `_SearchStatusBar` in AppBar shows match count and ↑↓ navigation; `SourceReferenceChips` passes `snippet` as query param; `router.dart` parses and forwards it
 
 ## Completed (cycle 17)
