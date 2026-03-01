@@ -1,4 +1,15 @@
 
+## 2026-03-01 (cycle 14)
+
+### Added
+- **Undo/redo count indicator in toolbar** (`notebook_toolbar.dart`):
+  - Replaced the two compact `_ModernToolbarButton` undo/redo buttons with a new `_UndoRedoButton` widget.
+  - Each button now shows a small bold count label (primary-coloured) beneath the icon indicating how many steps remain in the undo or redo stack.
+  - A reserved `SizedBox(height: 10)` keeps the icon vertically stable when the count is zero, preventing layout shifts.
+  - Tooltip text updates to include the step count when > 0 (e.g. "Undo (5)").
+  - The count is capped at "99+" to avoid overflow on very long sessions.
+  - Removed the now-unused `compact` parameter from `_ModernToolbarButton`.
+
 ## 2026-03-01 (cycle 22)
 
 ### Added
