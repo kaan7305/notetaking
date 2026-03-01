@@ -15,6 +15,8 @@ class TextElement with _$TextElement {
     @Default(16.0) double fontSize,
     @Default('system') String fontFamily,
     @Default('#000000') String color,
+    @Default(false) bool isBold,
+    @Default(false) bool isItalic,
     required DateTime createdAt,
     @Default(false) bool isDeleted,
   }) = _TextElement;

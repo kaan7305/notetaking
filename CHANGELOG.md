@@ -1,4 +1,18 @@
 
+## 2026-03-01 (cycle 20)
+
+### Added
+- **Keyboard shortcuts for the canvas** (`drawing_canvas.dart`, `canvas_notifier.dart`):
+  - `Delete` / `Backspace` — already worked; now handled in the unified shortcut block.
+  - `Escape` — deactivates the active text box if one is open; otherwise clears the current selection.
+  - `Cmd/Ctrl + Z` — undo; consumed even when there is nothing to undo so the browser/system undo doesn't interfere.
+  - `Cmd/Ctrl + Shift + Z` / `Ctrl + Y` — redo.
+  - `Cmd/Ctrl + A` — select all strokes and text elements on the page (calls new `CanvasNotifier.selectAll()`).
+  - `Cmd/Ctrl + C` — copies the current selection to the in-memory canvas clipboard.
+  - `Cmd/Ctrl + V` — pastes from the clipboard (offset by `AppDimensions.pasteOffset` as usual).
+- **`CanvasNotifier.selectAll()`**: New method that selects every stroke and text element on the page in one call. No-op on an empty canvas.
+- **2 new unit tests** in `test/canvas_notifier_test.dart` covering `selectAll` with content and with an empty canvas (45 tests total).
+
 ## 2026-03-01 (cycle 19)
 
 ### Fixed

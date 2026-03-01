@@ -8,6 +8,8 @@ import 'package:study_notebook/app/colors.dart';
 import 'package:study_notebook/core/models/models.dart';
 import 'package:study_notebook/core/utils/constants.dart';
 
+import 'package:study_notebook/core/providers/clipboard_provider.dart';
+
 import 'canvas_notifier.dart';
 import 'canvas_state.dart';
 import 'page_background_painter.dart';
@@ -89,16 +91,88 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
     final canvas = Focus(
       focusNode: _focusNode,
       onKeyEvent: (node, event) {
-        if (event is KeyDownEvent &&
-            (event.logicalKey == LogicalKeyboardKey.delete ||
-                event.logicalKey == LogicalKeyboardKey.backspace)) {
+        if (event is! KeyDownEvent) return KeyEventResult.ignored;
+
+        final notifier = ref.read(canvasProvider(widget.pageId).notifier);
+        final isCmd = HardwareKeyboard.instance.isMetaPressed;
+        final isCtrl = HardwareKeyboard.instance.isControlPressed;
+        final isShift = HardwareKeyboard.instance.isShiftPressed;
+        final isCmdOrCtrl = isCmd || isCtrl;
+
+        // Delete / Backspace — delete selected content.
+        if (event.logicalKey == LogicalKeyboardKey.delete ||
+            event.logicalKey == LogicalKeyboardKey.backspace) {
           if (canvasState.hasSelection) {
-            ref
-                .read(canvasProvider(widget.pageId).notifier)
-                .deleteSelectedStrokes();
+            notifier.deleteSelectedStrokes();
             return KeyEventResult.handled;
           }
         }
+
+        // Escape — deactivate active text box, or clear selection.
+        if (event.logicalKey == LogicalKeyboardKey.escape) {
+          if (canvasState.activeTextId != null) {
+            notifier.setActiveText(null);
+            return KeyEventResult.handled;
+          }
+          if (canvasState.hasSelection) {
+            notifier.clearSelection();
+            return KeyEventResult.handled;
+          }
+        }
+
+        if (!isCmdOrCtrl) return KeyEventResult.ignored;
+
+        // Cmd/Ctrl + Z — undo.
+        if (event.logicalKey == LogicalKeyboardKey.keyZ && !isShift) {
+          if (canvasState.canUndo) {
+            notifier.undo();
+            return KeyEventResult.handled;
+          }
+          return KeyEventResult.handled; // consume even when nothing to undo
+        }
+
+        // Cmd/Ctrl + Shift + Z  or  Ctrl + Y — redo.
+        if ((event.logicalKey == LogicalKeyboardKey.keyZ && isShift) ||
+            (isCtrl && event.logicalKey == LogicalKeyboardKey.keyY)) {
+          if (canvasState.canRedo) {
+            notifier.redo();
+            return KeyEventResult.handled;
+          }
+          return KeyEventResult.handled;
+        }
+
+        // Cmd/Ctrl + A — select all strokes and text elements.
+        if (event.logicalKey == LogicalKeyboardKey.keyA) {
+          notifier.selectAll();
+          return KeyEventResult.handled;
+        }
+
+        // Cmd/Ctrl + C — copy selected content to clipboard.
+        if (event.logicalKey == LogicalKeyboardKey.keyC) {
+          if (canvasState.hasSelection) {
+            final selectedStrokes = canvasState.strokes
+                .where((s) => canvasState.selectedStrokeIds.contains(s.id))
+                .toList();
+            final selectedTexts = canvasState.textElements
+                .where((t) => canvasState.selectedTextIds.contains(t.id))
+                .toList();
+            ref
+                .read(clipboardProvider.notifier)
+                .copy(selectedStrokes, selectedTexts);
+            return KeyEventResult.handled;
+          }
+        }
+
+        // Cmd/Ctrl + V — paste from clipboard.
+        if (event.logicalKey == LogicalKeyboardKey.keyV) {
+          final clipboard = ref.read(clipboardProvider);
+          if (clipboard != null && !clipboard.isEmpty) {
+            notifier.pasteFromClipboard(
+                clipboard.strokes, clipboard.textElements);
+            return KeyEventResult.handled;
+          }
+        }
+
         return KeyEventResult.ignored;
       },
       child: ClipRect(

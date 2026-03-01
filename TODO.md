@@ -3,6 +3,17 @@
 ## In Progress
 - (none)
 
+## Medium Priority
+- [ ] Add retry button for failed AI chat requests
+- [ ] Validate PDF upload file size (warn if > 50 MB)
+- [ ] Robust hex color parsing in notebook_screen (guard against malformed values)
+- [ ] Responsive AI chat panel width (clamp to 40% of screen instead of fixed 360 px)
+
+## Low Priority / Polish
+- [ ] Typing indicator dark-mode support (hard-coded Colors.grey.shade200 background)
+- [ ] Undo/redo count indicator in toolbar (show remaining steps)
+- [ ] Page duplicate feature in sidebar long-press menu
+
 ## High Priority
 
 ### Canvas / Drawing

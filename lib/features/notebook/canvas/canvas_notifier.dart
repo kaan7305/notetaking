@@ -426,6 +426,18 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
     );
   }
 
+  /// Selects every stroke and text element on the current page.
+  void selectAll() {
+    if (state.strokes.isEmpty && state.textElements.isEmpty) return;
+    state = state.copyWith(
+      selectedStrokeIds: {for (final s in state.strokes) s.id},
+      selectedTextIds: {for (final t in state.textElements) t.id},
+      isSelecting: false,
+      selectionLassoPoints: () => null,
+      selectionRect: () => null,
+    );
+  }
+
   // ─────────────── Move selection ───────────────
 
   /// Snapshot undo state before a drag-move starts (called once per drag).

@@ -285,4 +285,53 @@ void main() {
       expect(notifier.state.textElements, hasLength(1));
     });
   });
+
+  group('CanvasNotifier.selectAll', () {
+    Stroke makeStroke(String id) => Stroke(
+          id: id,
+          pageId: 'test-page',
+          toolType: 'pen',
+          color: '#FF000000',
+          strokeWidth: 2,
+          points: const [StrokePoint(x: 0, y: 0, pressure: 0.5, timestamp: 0)],
+          createdAt: DateTime(2026),
+        );
+
+    TextElement makeText(String id) => TextElement(
+          id: id,
+          pageId: 'test-page',
+          content: 'Hi',
+          x: 10,
+          y: 10,
+          width: 100,
+          fontSize: 16,
+          fontFamily: 'system',
+          color: '#FF000000',
+          createdAt: DateTime(2026),
+        );
+
+    test('selects all strokes and text elements', () async {
+      final notifier = makeNotifier();
+      await pump();
+
+      notifier.onPointerDown(const Offset(10, 10), 0.5);
+      notifier.onPointerUp();
+      notifier.addTextElement(makeText('t1'));
+
+      notifier.selectAll();
+
+      expect(notifier.state.selectedStrokeIds,
+          containsAll(notifier.state.strokes.map((s) => s.id)));
+      expect(notifier.state.selectedTextIds, contains('t1'));
+      expect(notifier.state.hasSelection, isTrue);
+    });
+
+    test('no-op when canvas is empty', () async {
+      final notifier = makeNotifier();
+      await pump();
+
+      notifier.selectAll(); // should not throw
+      expect(notifier.state.hasSelection, isFalse);
+    });
+  });
 }
