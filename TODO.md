@@ -3,6 +3,11 @@
 ## In Progress
 - (none)
 
+## Completed (cycle 24 — AI provider bug fixes)
+- [x] 2026-03-01: Fix AI context window bug — `_dispatchRequest` was sending `.take(20)` which forwarded the FIRST 20 messages; changed to `sublist(length - 20)` so the AI always sees the most RECENT conversation context
+- [x] 2026-03-01: Fix `pageNumber` JSON cast in `_dispatchRequest` source references — changed `as int?` to `(as num?)?.toInt()` so integer-valued JSON doubles decode correctly (matching the same fix already applied in flashcard/practice providers)
+- [x] 2026-03-01: Preserve AI mode on `clearChat()` — previously reset to `AiMode.hint`; now restores `currentMode` so user's selected mode survives a chat clear
+
 ## Completed (cycle 22 — analyzer clean-up)
 - [x] 2026-03-01: Fix `sync_provider.dart` — missing `models.dart` import caused `Success`/`Failure` to be undefined (15 errors); added import and removed all now-unnecessary explicit type casts on strongly-typed `freezed` model properties by using `is! Success<T>` with explicit type parameters
 - [x] 2026-03-01: Fix `lecture_capture_screen.dart` — `notesGeneratorProvider` is a family provider and was already correctly used with `(widget.courseId)` (fixed in a prior cycle; analyzer errors were stale)

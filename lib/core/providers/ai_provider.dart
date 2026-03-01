@@ -137,13 +137,18 @@ class AiChatNotifier extends StateNotifier<AiChatState> {
   /// Performs the actual HTTP call and updates state on success/failure.
   Future<void> _dispatchRequest(String content, {String? imageBase64}) async {
     // Build the request body for the backend.
+    // Send the LAST 20 messages for context so the AI sees the most recent
+    // conversation, not the oldest messages.
+    const maxHistoryMessages = 20;
+    final historyMessages = state.messages.length > maxHistoryMessages
+        ? state.messages.sublist(state.messages.length - maxHistoryMessages)
+        : state.messages;
     final body = <String, dynamic>{
       'courseId': _courseId,
       'mode': state.currentMode.name,
       'message': content,
       if (imageBase64 != null) 'image': imageBase64,
-      'history': state.messages
-          .take(20) // Limit context window
+      'history': historyMessages
           .map((m) => {'role': m.role, 'content': m.content})
           .toList(),
     };
@@ -163,7 +168,8 @@ class AiChatNotifier extends StateNotifier<AiChatState> {
             .map((r) => SourceReference(
                   documentId: r['documentId'] as String? ?? '',
                   documentName: r['documentName'] as String? ?? '',
-                  pageNumber: r['pageNumber'] as int? ?? 0,
+                  // Use (as num?) to handle both int and double from JSON.
+                  pageNumber: (r['pageNumber'] as num?)?.toInt() ?? 0,
                   snippet: r['snippet'] as String?,
                 ))
             .toList();
@@ -198,9 +204,10 @@ class AiChatNotifier extends StateNotifier<AiChatState> {
   }
 
   /// Clears the in-memory chat state and deletes all persisted messages.
+  /// The current AI mode is preserved so the user does not need to re-select it.
   Future<void> clearChat() async {
     await _dao.deleteAllByCourseId(_courseId);
-    state = const AiChatState();
+    state = AiChatState(currentMode: state.currentMode);
   }
 
   void clearError() {

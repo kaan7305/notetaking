@@ -1,4 +1,11 @@
 
+## 2026-03-01 (cycle 24 — AI provider bug fixes)
+
+### Fixed
+- **AI chat context window** (`ai_provider.dart`): `_dispatchRequest` was using `.take(20)` to build the history payload, which sent the **first** 20 messages in the conversation rather than the most recent ones. For any conversation longer than 20 messages the AI had no visibility of recent context, making follow-up questions incoherent. Fixed by using `sublist(length - 20)` so the AI always receives the latest 20 messages.
+- **Source reference `pageNumber` JSON cast** (`ai_provider.dart`): `r['pageNumber'] as int?` throws a `TypeError` when the JSON API returns an integer as a JSON double (e.g. `1.0` instead of `1`). Changed to `(r['pageNumber'] as num?)?.toInt()` — consistent with the identical fix already applied in `flashcard_provider.dart` and `practice_provider.dart`.
+- **AI mode reset on clear chat** (`ai_provider.dart`): `clearChat()` was replacing state with `const AiChatState()`, silently resetting the user's selected mode back to `AiMode.hint`. Now resets only the message list, error, and retry fields while preserving `currentMode`.
+
 ## 2026-03-01 (cycle 23 — offline sync wired + Settings sync tile)
 
 ### Added
