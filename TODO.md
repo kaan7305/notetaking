@@ -3,6 +3,17 @@
 ## In Progress
 - (none)
 
+## Completed (cycle 18)
+- [x] 2026-03-01: Fix missing `package:flutter/services.dart` import in `flashcard_screen.dart` — `KeyDownEvent` and `LogicalKeyboardKey` were unresolved (14 analyzer errors); adding the import clears all of them
+- [x] 2026-03-01: Quiz UX improvements — animated progress bar (`TweenAnimationBuilder<double>` + `LinearProgressIndicator`, 4 px, advances on answer reveal), per-score motivational message on completion screen (4 tiers: ≥90/≥70/≥50/<50), "New Questions" `OutlinedButton` on completion screen + matching AppBar icon button, "Regenerate" AppBar icon when quiz is complete
+
+## Potential future tasks
+- [ ] Add keyboard shortcuts to quiz screen (A/B/C/D keys to select answer, Space/Enter for Next)
+- [ ] Persist practice questions to SQLite between sessions (like flashcards)
+- [ ] Add JSON parse safety (try/catch) around API response parsing in flashcard_provider and practice_provider
+- [ ] Offline sync mechanism — implement `SyncProvider` that queues is_synced=0 rows and pushes to Supabase on reconnect
+- [ ] Document viewer: highlight the snippet referenced by AI source citations
+
 ## Completed (cycle 17)
 - [x] 2026-03-01: Swipe gestures + keyboard shortcuts for flashcard navigation — horizontal swipe (left=next, right=previous), arrow keys (←→) + Space/↑↓ to flip, auto-focus on mount, subtle navigation hint below card
 

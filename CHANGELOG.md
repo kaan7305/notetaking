@@ -1,4 +1,18 @@
 
+## 2026-03-01 (cycle 18 — quiz UX + analyzer fix)
+
+### Fixed
+- **Missing `package:flutter/services.dart` import** (`flashcard_screen.dart`): `KeyDownEvent` and `LogicalKeyboardKey` were unresolved identifiers in the keyboard-shortcut handler added in cycle 17, producing 14 analyzer errors. Adding the explicit `services.dart` import resolves all of them — `flutter/material.dart` does not re-export these classes at this Flutter/Dart version.
+
+### Improved
+- **Quiz progress bar** (`quiz_screen.dart`): A 4 px `LinearProgressIndicator` now stretches across the full width at the top of each question. The value advances in two steps: to `currentIndex / total` while the question is unanswered, then to `(currentIndex + 1) / total` once an answer is revealed. `TweenAnimationBuilder<double>` animates every step over 300 ms with an `easeOut` curve, giving smooth, incremental feedback on each question.
+- **Per-score motivational message on completion** (`quiz_screen.dart`): The `_CompletionScreen` now shows a contextual message beneath the score label, chosen by a Dart 3 `switch` expression on the percentage:
+  - ≥ 90 % → trophy icon + "Excellent work! You've mastered this material."
+  - ≥ 70 % → thumb-up icon + "Good job! Review the explanations to go further."
+  - ≥ 50 % → school icon + "Halfway there. Keep reviewing and try again."
+  - < 50 % → book icon + "More practice needed — re-read the source material."
+- **"New Questions" button on completion screen** (`quiz_screen.dart`): An `OutlinedButton.icon` below the existing "Try Again" button calls `notifier.generateQuestions()` to fetch a fresh set of AI-generated questions without leaving the screen. While generating it shows a compact `CircularProgressIndicator` and disables the button. The same action is also available as an `IconButton` (`auto_awesome_outlined`) in the `AppBar` whenever `state.isComplete` is true.
+
 ## 2026-03-01 (cycle 17 — flashcard swipe gestures)
 
 ### Added

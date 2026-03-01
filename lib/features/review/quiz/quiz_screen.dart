@@ -30,6 +30,14 @@ class QuizScreen extends ConsumerWidget {
                 ),
               ),
             ),
+          if (state.isComplete)
+            IconButton(
+              icon: const Icon(Icons.auto_awesome_outlined),
+              tooltip: 'New questions',
+              onPressed: state.isGenerating
+                  ? null
+                  : () => notifier.generateQuestions(),
+            ),
         ],
       ),
       body: state.questions.isEmpty
@@ -42,10 +50,14 @@ class QuizScreen extends ConsumerWidget {
               ? _CompletionScreen(
                   correct: state.correctCount,
                   total: state.questions.length,
+                  isGenerating: state.isGenerating,
                   onRestart: () => notifier.restart(),
+                  onNewQuestions: () => notifier.generateQuestions(),
                 )
               : _QuestionView(
                   question: state.currentQuestion!,
+                  currentIndex: state.currentIndex,
+                  totalQuestions: state.questions.length,
                   selectedAnswer: state.selectedAnswer,
                   showExplanation: state.showExplanation,
                   onSelect: (index) => notifier.selectAnswer(index),
@@ -109,6 +121,8 @@ class _EmptyState extends StatelessWidget {
 
 class _QuestionView extends StatelessWidget {
   final PracticeQuestion question;
+  final int currentIndex;
+  final int totalQuestions;
   final int? selectedAnswer;
   final bool showExplanation;
   final ValueChanged<int> onSelect;
@@ -116,6 +130,8 @@ class _QuestionView extends StatelessWidget {
 
   const _QuestionView({
     required this.question,
+    required this.currentIndex,
+    required this.totalQuestions,
     this.selectedAnswer,
     required this.showExplanation,
     required this.onSelect,
@@ -124,7 +140,26 @@ class _QuestionView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
+    final progress = totalQuestions > 0
+        ? (currentIndex + (showExplanation ? 1 : 0)) / totalQuestions
+        : 0.0;
+
+    return Column(
+      children: [
+        // Progress bar across the full width at the top.
+        TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0, end: progress.toDouble()),
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+          builder: (_, value, __) => LinearProgressIndicator(
+            value: value,
+            minHeight: 4,
+            backgroundColor: Colors.grey.shade200,
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+          ),
+        ),
+        Expanded(
+          child: SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -262,6 +297,9 @@ class _QuestionView extends StatelessWidget {
           ],
         ],
       ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -269,17 +307,44 @@ class _QuestionView extends StatelessWidget {
 class _CompletionScreen extends StatelessWidget {
   final int correct;
   final int total;
+  final bool isGenerating;
   final VoidCallback onRestart;
+  final VoidCallback onNewQuestions;
 
   const _CompletionScreen({
     required this.correct,
     required this.total,
+    required this.isGenerating,
     required this.onRestart,
+    required this.onNewQuestions,
   });
 
   @override
   Widget build(BuildContext context) {
     final percentage = total > 0 ? (correct / total * 100).round() : 0;
+
+    final (icon, iconColor, message) = switch (percentage) {
+      >= 90 => (
+          Icons.emoji_events,
+          AppColors.warning,
+          'Excellent work! You\'ve mastered this material.',
+        ),
+      >= 70 => (
+          Icons.thumb_up_rounded,
+          AppColors.success,
+          'Good job! Review the explanations to go further.',
+        ),
+      >= 50 => (
+          Icons.school,
+          AppColors.primary,
+          'Halfway there. Keep reviewing and try again.',
+        ),
+      _ => (
+          Icons.menu_book_rounded,
+          Colors.grey.shade500,
+          'More practice needed — re-read the source material.',
+        ),
+    };
 
     return Center(
       child: Padding(
@@ -287,27 +352,40 @@ class _CompletionScreen extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              percentage >= 70 ? Icons.emoji_events : Icons.school,
-              size: 64,
-              color:
-                  percentage >= 70 ? AppColors.warning : AppColors.primary,
-            ),
+            Icon(icon, size: 64, color: iconColor),
             const SizedBox(height: 16),
-            Text(
+            const Text(
               'Quiz Complete!',
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
             Text(
               '$correct / $total correct ($percentage%)',
               style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+            ),
+            const SizedBox(height: 28),
             FilledButton.icon(
               onPressed: onRestart,
               icon: const Icon(Icons.refresh),
               label: const Text('Try Again'),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: isGenerating ? null : onNewQuestions,
+              icon: isGenerating
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.auto_awesome_outlined),
+              label: Text(isGenerating ? 'Generating…' : 'New Questions'),
             ),
           ],
         ),
