@@ -1,4 +1,15 @@
 
+## 2026-03-01 (cycle 15)
+
+### Added
+- **AI chat message persistence** (`ai_messages_dao.dart`, `ai_provider.dart`, `ai_chat_panel.dart`):
+  - Created `AiMessagesDao` backed by the existing `ai_messages` SQLite table. Supports `insert`, `getByCourseId` (ordered oldest-first), `deleteAllByCourseId` (for clear-chat), and `pruneOldMessages` (keeps last 100 rows per course to prevent unbounded growth).
+  - Image payloads (`imageBase64`) are intentionally excluded from DB storage — they are large and only needed at send time; the AI response text is what matters for history display.
+  - `AiChatNotifier` now accepts `AiMessagesDao` as a constructor dependency. On init it calls `_loadHistory()` asynchronously and surfaces progress via a new `isLoadingHistory` field in `AiChatState`.
+  - Each user message is persisted immediately after being added to state; each assistant response is persisted after receipt, then `pruneOldMessages` is called.
+  - `clearChat()` is now `async` and deletes all stored messages for the course before resetting in-memory state.
+  - `AiChatPanel` shows a compact `CircularProgressIndicator` while `isLoadingHistory` is true, preventing the empty-chat placeholder from flashing during the brief SQLite load.
+
 ## 2026-03-01 (cycle 14)
 
 ### Added

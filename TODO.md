@@ -20,7 +20,7 @@
 - (none remaining at this priority)
 
 ### AI Assistant
-- [ ] (none remaining at this priority)
+- [x] 2026-03-01: Persist AI chat history to SQLite (AiMessagesDao + isLoadingHistory state, 100-message prune limit, images excluded from DB)
 
 ### Stability / Correctness
 - [x] 2026-03-01: Add error feedback when DB load fails on canvas open (dismissible red banner)

@@ -321,9 +321,14 @@ class _PageThumbnail extends ConsumerWidget {
   }
 
   Color _hexToColor(String hex) {
-    hex = hex.replaceFirst('#', '');
-    if (hex.length == 6) hex = 'FF$hex';
-    return Color(int.parse(hex, radix: 16));
+    try {
+      hex = hex.replaceFirst('#', '');
+      if (hex.length == 6) hex = 'FF$hex';
+      if (hex.length != 8) return Colors.white;
+      return Color(int.parse(hex, radix: 16));
+    } catch (_) {
+      return Colors.white;
+    }
   }
 
   void _showContextMenu(BuildContext context) {

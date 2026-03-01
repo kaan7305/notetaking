@@ -541,9 +541,19 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
   // ─────────────── Clear page ───────────────
 
   void clearPage() {
-    if (state.strokes.isEmpty) return;
+    if (state.strokes.isEmpty && state.textElements.isEmpty) return;
     _pushUndoState();
-    state = state.copyWith(strokes: [], redoStack: []);
+    state = state.copyWith(
+      strokes: [],
+      textElements: [],
+      selectedStrokeIds: {},
+      selectedTextIds: {},
+      activeTextId: () => null,
+      selectionLassoPoints: () => null,
+      selectionRect: () => null,
+      isSelecting: false,
+      redoStack: [],
+    );
     _markDirty();
   }
 

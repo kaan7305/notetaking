@@ -113,7 +113,11 @@ class _AiChatPanelState extends ConsumerState<AiChatPanel> {
 
           // Messages list.
           Expanded(
-            child: chatState.messages.isEmpty
+            child: chatState.isLoadingHistory
+                ? const Center(
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : chatState.messages.isEmpty
                 ? _EmptyChat(mode: chatState.currentMode)
                 : ListView.builder(
                     controller: _scrollController,

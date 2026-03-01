@@ -5,12 +5,17 @@ import 'package:study_notebook/core/api/api_client.dart';
 import 'package:study_notebook/core/api/api_endpoints.dart';
 import 'package:study_notebook/core/models/models.dart';
 import 'package:study_notebook/core/providers/api_provider.dart';
+import 'package:study_notebook/core/storage/storage.dart';
 
 /// State for the AI chat, scoped to a course.
 class AiChatState {
   final List<AiMessage> messages;
   final AiMode currentMode;
   final bool isLoading;
+
+  /// True while the initial message history is being loaded from the DB.
+  final bool isLoadingHistory;
+
   final String? error;
 
   /// Content of the last user message that failed, used for retry.
@@ -23,6 +28,7 @@ class AiChatState {
     this.messages = const [],
     this.currentMode = AiMode.hint,
     this.isLoading = false,
+    this.isLoadingHistory = false,
     this.error,
     this.retryContent,
     this.retryImageBase64,
@@ -32,6 +38,7 @@ class AiChatState {
     List<AiMessage>? messages,
     AiMode? currentMode,
     bool? isLoading,
+    bool? isLoadingHistory,
     String? Function()? error,
     String? Function()? retryContent,
     String? Function()? retryImageBase64,
@@ -40,6 +47,7 @@ class AiChatState {
       messages: messages ?? this.messages,
       currentMode: currentMode ?? this.currentMode,
       isLoading: isLoading ?? this.isLoading,
+      isLoadingHistory: isLoadingHistory ?? this.isLoadingHistory,
       error: error != null ? error() : this.error,
       retryContent:
           retryContent != null ? retryContent() : this.retryContent,
@@ -49,13 +57,35 @@ class AiChatState {
   }
 }
 
-/// Manages AI chat for a course.
+/// Manages AI chat for a course, with SQLite-backed message persistence.
 class AiChatNotifier extends StateNotifier<AiChatState> {
   final ApiClient _apiClient;
+  final AiMessagesDao _dao;
   final String _courseId;
 
-  AiChatNotifier(this._apiClient, this._courseId)
-      : super(const AiChatState());
+  AiChatNotifier(this._apiClient, this._dao, this._courseId)
+      : super(const AiChatState(isLoadingHistory: true)) {
+    _loadHistory();
+  }
+
+  // ──────────────────── history ────────────────────
+
+  /// Loads persisted messages from SQLite on provider init.
+  Future<void> _loadHistory() async {
+    final result = await _dao.getByCourseId(_courseId);
+    switch (result) {
+      case Success(data: final messages):
+        state = state.copyWith(
+          messages: messages,
+          isLoadingHistory: false,
+        );
+      case Failure():
+        // On load failure, start with empty history rather than blocking UX.
+        state = state.copyWith(isLoadingHistory: false);
+    }
+  }
+
+  // ──────────────────── actions ────────────────────
 
   void setMode(AiMode mode) {
     state = state.copyWith(currentMode: mode);
@@ -80,6 +110,9 @@ class AiChatNotifier extends StateNotifier<AiChatState> {
       retryContent: () => null,
       retryImageBase64: () => null,
     );
+
+    // Persist user message (image excluded from DB storage).
+    await _dao.insert(userMessage);
 
     await _dispatchRequest(content, imageBase64: imageBase64);
   }
@@ -150,6 +183,10 @@ class AiChatNotifier extends StateNotifier<AiChatState> {
           isLoading: false,
         );
 
+        // Persist assistant response, then prune to keep DB size bounded.
+        await _dao.insert(assistantMessage);
+        await _dao.pruneOldMessages(_courseId);
+
       case Failure(message: final msg):
         state = state.copyWith(
           isLoading: false,
@@ -160,7 +197,9 @@ class AiChatNotifier extends StateNotifier<AiChatState> {
     }
   }
 
-  void clearChat() {
+  /// Clears the in-memory chat state and deletes all persisted messages.
+  Future<void> clearChat() async {
+    await _dao.deleteAllByCourseId(_courseId);
     state = const AiChatState();
   }
 
@@ -178,6 +217,6 @@ final aiChatProvider =
     StateNotifierProvider.family<AiChatNotifier, AiChatState, String>(
   (ref, courseId) {
     final apiClient = ref.watch(apiClientProvider);
-    return AiChatNotifier(apiClient, courseId);
+    return AiChatNotifier(apiClient, AiMessagesDao(), courseId);
   },
 );

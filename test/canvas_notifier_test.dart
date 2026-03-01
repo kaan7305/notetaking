@@ -324,4 +324,80 @@ void main() {
       expect(notifier.state.hasSelection, isFalse);
     });
   });
+
+  group('CanvasNotifier.clearPage', () {
+    TextElement makeText(String id) => TextElement(
+          id: id,
+          pageId: 'test-page',
+          content: 'Hi',
+          x: 10,
+          y: 10,
+          width: 100,
+          fontSize: 16,
+          fontFamily: 'system',
+          color: '#FF000000',
+          createdAt: DateTime(2026),
+        );
+
+    test('clears both strokes and text elements', () async {
+      final notifier = makeNotifier();
+      await pump();
+
+      // Draw a stroke.
+      notifier.onPointerDown(const Offset(10, 10), 0.5);
+      notifier.onPointerMove(const Offset(50, 50), 0.5);
+      notifier.onPointerUp();
+      // Add a text element.
+      notifier.addTextElement(makeText('t1'));
+
+      expect(notifier.state.strokes, isNotEmpty);
+      expect(notifier.state.textElements, isNotEmpty);
+
+      notifier.clearPage();
+
+      expect(notifier.state.strokes, isEmpty);
+      expect(notifier.state.textElements, isEmpty);
+    });
+
+    test('clears text elements even when there are no strokes', () async {
+      final notifier = makeNotifier();
+      await pump();
+
+      notifier.addTextElement(makeText('t1'));
+      expect(notifier.state.strokes, isEmpty);
+      expect(notifier.state.textElements, hasLength(1));
+
+      notifier.clearPage();
+
+      expect(notifier.state.textElements, isEmpty);
+    });
+
+    test('clearPage is undoable', () async {
+      final notifier = makeNotifier();
+      await pump();
+
+      notifier.onPointerDown(const Offset(10, 10), 0.5);
+      notifier.onPointerMove(const Offset(50, 50), 0.5);
+      notifier.onPointerUp();
+      notifier.addTextElement(makeText('t1'));
+
+      notifier.clearPage();
+      expect(notifier.state.strokes, isEmpty);
+      expect(notifier.state.textElements, isEmpty);
+
+      notifier.undo();
+      expect(notifier.state.strokes, isNotEmpty);
+      expect(notifier.state.textElements, hasLength(1));
+    });
+
+    test('no-op when canvas is already empty', () async {
+      final notifier = makeNotifier();
+      await pump();
+
+      // Should not push an undo state.
+      expect(notifier.state.undoStack, isEmpty);
+      notifier.clearPage();
+      expect(notifier.state.undoStack, isEmpty);
+    });
+  });
 }

@@ -236,8 +236,13 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
 
   @override
   void deactivate() {
-    if (_selectedPageId != null) {
-      _saveCurrent(_selectedPageId!);
+    // Resolve the active page id the same way build() does: prefer
+    // _selectedPageId but fall back to the first page when the user has never
+    // tapped a page thumbnail (first-open scenario).
+    final pagesValue = ref.read(pageProvider(widget.notebookId)).valueOrNull;
+    final activeId = _selectedPageId ?? pagesValue?.firstOrNull?.id;
+    if (activeId != null) {
+      _saveCurrent(activeId);
     }
     super.deactivate();
   }
