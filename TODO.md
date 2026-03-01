@@ -19,7 +19,7 @@
 
 ## Potential future tasks
 - [ ] Offline sync mechanism — implement `SyncProvider` that queues is_synced=0 rows and pushes to Supabase on reconnect
-- [ ] Document viewer: highlight the snippet referenced by AI source citations
+- [x] 2026-03-01: Document viewer: highlight the snippet referenced by AI source citations — `DocumentViewerScreen` now accepts a `snippet` param; `PdfViewerController.goToPage` scrolls to `initialPage`; `PdfTextSearcher.startTextSearch` highlights all occurrences with yellow/orange fill; `_SearchStatusBar` in AppBar shows match count and ↑↓ navigation; `SourceReferenceChips` passes `snippet` as query param; `router.dart` parses and forwards it
 
 ## Completed (cycle 17)
 - [x] 2026-03-01: Swipe gestures + keyboard shortcuts for flashcard navigation — horizontal swipe (left=next, right=previous), arrow keys (←→) + Space/↑↓ to flip, auto-focus on mount, subtle navigation hint below card

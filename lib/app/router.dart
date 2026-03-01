@@ -95,10 +95,13 @@ final routerProvider = Provider<GoRouter>((ref) {
               final page = int.tryParse(
                       state.uri.queryParameters['page'] ?? '') ??
                   1;
+              final snippet =
+                  state.uri.queryParameters['snippet'];
               return DocumentViewerScreen(
                 courseId: courseId,
                 documentId: documentId,
                 initialPage: page,
+                snippet: snippet,
               );
             },
           ),

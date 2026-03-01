@@ -1,4 +1,15 @@
 
+## 2026-03-01 (cycle 21 — document viewer page jump + snippet highlight)
+
+### Added
+- **Document viewer: jump to cited page + highlight snippet** (`document_viewer_screen.dart`, `source_reference_chips.dart`, `router.dart`):
+  - `DocumentViewerScreen` now accepts a `snippet` parameter (nullable `String`). When present a `PdfTextSearcher` is created, its `pageTextMatchPaintCallback` is wired into `PdfViewerParams.pagePaintCallbacks`, and `startTextSearch` is called once the viewer reports ready via `onViewerReady`.
+  - A `PdfViewerController` is created in `initState` and passed to every `PdfViewer.*` variant. `onViewerReady` triggers `controller.goToPage(pageNumber: initialPage)` so the viewer opens at the cited page even when no snippet is present.
+  - `matchTextColor` (yellow, 55% opacity) and `activeMatchTextColor` (orange, 75% opacity) highlight all occurrences; the current match is distinctively coloured.
+  - A new `_SearchStatusBar` widget in the AppBar shows `"current / total"` match count and ↑/↓ navigation buttons while a search is active; a compact spinner replaces the count while `isSearching` is true.
+  - `SourceReferenceChips` now includes `snippet` in the query parameters it pushes to the document viewer route (skipped when null/empty).
+  - `router.dart` parses the new `snippet` query parameter and forwards it to `DocumentViewerScreen`.
+
 ## 2026-03-01 (cycle 21 — flashcard JSON hardening)
 
 ### Improved

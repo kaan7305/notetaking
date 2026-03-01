@@ -38,13 +38,18 @@ class SourceReferenceChips extends StatelessWidget {
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           visualDensity: VisualDensity.compact,
           onPressed: () {
+            final queryParams = <String, String>{
+              'page': ref.pageNumber.toString(),
+              if (ref.snippet != null && ref.snippet!.isNotEmpty)
+                'snippet': ref.snippet!,
+            };
             context.pushNamed(
               RouteNames.documentViewer,
               pathParameters: {
                 'courseId': courseId,
                 'documentId': ref.documentId,
               },
-              queryParameters: {'page': ref.pageNumber.toString()},
+              queryParameters: queryParams,
             );
           },
         );
