@@ -5,12 +5,12 @@
 
 ## Medium Priority
 - [x] 2026-03-01: Add retry button for failed AI chat requests
-- [ ] Validate PDF upload file size (warn if > 50 MB)
-- [ ] Robust hex color parsing in notebook_screen (guard against malformed values)
-- [ ] Responsive AI chat panel width (clamp to 40% of screen instead of fixed 360 px)
+- [x] 2026-03-01: Validate PDF upload file size (warn if > 50 MB)
+- [x] 2026-03-01: Robust hex color parsing in notebook_screen (guard against malformed values)
+- [x] 2026-03-01: Responsive AI chat panel width (clamp to 40% of screen instead of fixed 360 px)
 
 ## Low Priority / Polish
-- [ ] Typing indicator dark-mode support (hard-coded Colors.grey.shade200 background)
+- [x] 2026-03-01: Typing indicator dark-mode support (uses theme-aware colorScheme colors)
 - [ ] Undo/redo count indicator in toolbar (show remaining steps)
 - [ ] Page duplicate feature in sidebar long-press menu
 

@@ -7,9 +7,11 @@ import 'package:study_notebook/core/storage/storage.dart';
 /// Manages the ordered list of [PageModel]s for a single notebook.
 class PageNotifier extends StateNotifier<AsyncValue<List<PageModel>>> {
   final PageDao _dao;
+  final StrokeDao _strokeDao;
+  final TextElementDao _textDao;
   final String _notebookId;
 
-  PageNotifier(this._dao, this._notebookId)
+  PageNotifier(this._dao, this._strokeDao, this._textDao, this._notebookId)
       : super(const AsyncValue.loading()) {
     loadPages();
   }
@@ -116,10 +118,95 @@ class PageNotifier extends StateNotifier<AsyncValue<List<PageModel>>> {
     state = AsyncValue.data(updated);
     return const Success(null);
   }
+
+  /// Duplicates a page, copying its settings, strokes, and text elements.
+  ///
+  /// The duplicate is inserted immediately after the source page and all
+  /// subsequent pages are renumbered.
+  Future<Result<PageModel>> duplicatePage(String sourcePageId) async {
+    final current = state.valueOrNull;
+    if (current == null) return const Failure('Pages not loaded');
+
+    final sourceIndex = current.indexWhere((p) => p.id == sourcePageId);
+    if (sourceIndex == -1) return const Failure('Page not found');
+
+    final sourcePage = current[sourceIndex];
+    final insertAtNumber = sourcePage.pageNumber + 1;
+    final now = DateTime.now();
+
+    // Shift all pages at or after the insertion point forward by one.
+    final shiftedPages = <PageModel>[];
+    for (final page in current) {
+      if (page.pageNumber >= insertAtNumber) {
+        final renumbered = page.copyWith(
+          pageNumber: page.pageNumber + 1,
+          updatedAt: now,
+        );
+        shiftedPages.add(renumbered);
+        final res = await _dao.update(renumbered);
+        if (res is Failure) return Failure(res.message, res.error);
+      }
+    }
+
+    // Create and persist the new page.
+    final newPage = PageModel(
+      id: const Uuid().v4(),
+      notebookId: _notebookId,
+      pageNumber: insertAtNumber,
+      templateType: sourcePage.templateType,
+      backgroundColor: sourcePage.backgroundColor,
+      lineSpacing: sourcePage.lineSpacing,
+      createdAt: now,
+      updatedAt: now,
+    );
+    final insertResult = await _dao.insert(newPage);
+    if (insertResult is Failure) {
+      return Failure(insertResult.message, insertResult.error);
+    }
+
+    // Copy strokes.
+    final strokesResult = await _strokeDao.getByPageId(sourcePageId);
+    if (strokesResult is Success<List<Stroke>> &&
+        strokesResult.data.isNotEmpty) {
+      final copied = strokesResult.data
+          .map((s) => s.copyWith(
+                id: const Uuid().v4(),
+                pageId: newPage.id,
+                createdAt: now,
+              ))
+          .toList();
+      await _strokeDao.insertBatch(copied);
+    }
+
+    // Copy text elements.
+    final textsResult = await _textDao.getByPageId(sourcePageId);
+    if (textsResult is Success<List<TextElement>> &&
+        textsResult.data.isNotEmpty) {
+      final copied = textsResult.data
+          .map((t) => t.copyWith(
+                id: const Uuid().v4(),
+                pageId: newPage.id,
+                createdAt: now,
+              ))
+          .toList();
+      await _textDao.insertBatch(copied);
+    }
+
+    // Rebuild in-memory list.
+    final updatedList = current.map((page) {
+      final shifted = shiftedPages.where((s) => s.id == page.id);
+      return shifted.isNotEmpty ? shifted.first : page;
+    }).toList();
+    updatedList.insert(sourceIndex + 1, newPage);
+    updatedList.sort((a, b) => a.pageNumber.compareTo(b.pageNumber));
+    state = AsyncValue.data(updatedList);
+
+    return Success(newPage);
+  }
 }
 
 /// Family provider keyed by notebookId.
 final pageProvider = StateNotifierProvider.family<PageNotifier,
     AsyncValue<List<PageModel>>, String>((ref, notebookId) {
-  return PageNotifier(PageDao(), notebookId);
+  return PageNotifier(PageDao(), StrokeDao(), TextElementDao(), notebookId);
 });

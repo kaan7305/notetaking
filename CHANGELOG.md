@@ -1,4 +1,12 @@
 
+## 2026-03-01 (cycle 21)
+
+### Fixed / Improved
+- **PDF upload file size validation** (`document_upload_sheet.dart`): `_pickAndUpload` now checks `file.size` immediately after the picker returns. If the file exceeds 50 MB (`50 * 1024 * 1024` bytes) an inline error is shown and the upload is aborted before any network call.
+- **Robust hex color parsing** (`notebook_screen.dart`): `_hexToColor` is now wrapped in a `try/catch`. Malformed hex strings (wrong length, non-hex characters, etc.) silently fall back to `Colors.white` instead of throwing a `FormatException` that would crash the canvas view.
+- **Responsive AI chat panel width** (`ai_chat_panel.dart`): The panel width is no longer a hard-coded 360 px. It is now computed as `(screenWidth * 0.4).clamp(300.0, 480.0)` via `MediaQuery`, so it adapts to different iPad/tablet screen sizes while staying within sane bounds.
+- **Typing indicator dark-mode support** (`ai_chat_panel.dart`): `_TypingIndicator` now uses `Theme.of(context).colorScheme.surfaceContainerHighest` for the bubble background and `colorScheme.onSurfaceVariant` for the spinner and text colour, replacing the hard-coded `Colors.grey.shade200` / `shade500` / `shade600` values that looked wrong in dark mode.
+
 ## 2026-03-01 (cycle 12)
 
 ### Added

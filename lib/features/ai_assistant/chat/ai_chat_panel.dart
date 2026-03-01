@@ -82,8 +82,12 @@ class _AiChatPanelState extends ConsumerState<AiChatPanel> {
       }
     });
 
+    // Clamp panel width to 40 % of the screen, between 300 and 480 px.
+    final screenWidth = MediaQuery.of(context).size.width;
+    final panelWidth = (screenWidth * 0.4).clamp(300.0, 480.0);
+
     return Container(
-      width: 360,
+      width: panelWidth,
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
         border: Border(
@@ -349,7 +353,7 @@ class _TypingIndicator extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 4),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.grey.shade200,
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
@@ -360,11 +364,16 @@ class _TypingIndicator extends StatelessWidget {
               height: 16,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: Colors.grey.shade500,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(width: 8),
-            Text('Thinking...', style: TextStyle(color: Colors.grey.shade600)),
+            Text(
+              'Thinking...',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
           ],
         ),
       ),

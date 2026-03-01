@@ -32,6 +32,13 @@ class _DocumentUploadSheetState extends ConsumerState<DocumentUploadSheet> {
     final file = result.files.first;
     if (file.path == null) return;
 
+    // Warn if the file exceeds 50 MB before attempting upload.
+    const maxBytes = 50 * 1024 * 1024;
+    if (file.size > maxBytes) {
+      setState(() => _error = 'File is too large. Maximum size is 50 MB.');
+      return;
+    }
+
     setState(() {
       _isUploading = true;
       _error = null;
