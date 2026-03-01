@@ -19,8 +19,8 @@ class CanvasState {
   final List<Offset>? selectionLassoPoints;
   final Rect? selectionRect;
   final bool isSelecting;
-  final List<List<Stroke>> undoStack;
-  final List<List<Stroke>> redoStack;
+  final List<(List<Stroke>, List<TextElement>)> undoStack;
+  final List<(List<Stroke>, List<TextElement>)> redoStack;
   final Offset canvasOffset;
   final double zoom;
   final Offset? hoverPosition;
@@ -84,8 +84,8 @@ class CanvasState {
     List<Offset>? Function()? selectionLassoPoints,
     Rect? Function()? selectionRect,
     bool? isSelecting,
-    List<List<Stroke>>? undoStack,
-    List<List<Stroke>>? redoStack,
+    List<(List<Stroke>, List<TextElement>)>? undoStack,
+    List<(List<Stroke>, List<TextElement>)>? redoStack,
     Offset? canvasOffset,
     double? zoom,
     Offset? Function()? hoverPosition,

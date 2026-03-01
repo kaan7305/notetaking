@@ -454,7 +454,10 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
   // ─────────────── Undo / Redo ───────────────
 
   void _pushUndoState() {
-    var undoStack = [...state.undoStack, List<Stroke>.from(state.strokes)];
+    var undoStack = [
+      ...state.undoStack,
+      (List<Stroke>.from(state.strokes), List<TextElement>.from(state.textElements)),
+    ];
     if (undoStack.length > AppDimensions.maxUndoSteps) {
       undoStack = undoStack.sublist(undoStack.length - AppDimensions.maxUndoSteps);
     }
@@ -464,15 +467,16 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
   void undo() {
     if (!state.canUndo) return;
 
-    final undoStack = List<List<Stroke>>.from(state.undoStack);
-    final previous = undoStack.removeLast();
+    final undoStack = [...state.undoStack];
+    final (prevStrokes, prevTexts) = undoStack.removeLast();
     final redoStack = [
       ...state.redoStack,
-      List<Stroke>.from(state.strokes)
+      (List<Stroke>.from(state.strokes), List<TextElement>.from(state.textElements)),
     ];
 
     state = state.copyWith(
-      strokes: previous,
+      strokes: prevStrokes,
+      textElements: prevTexts,
       undoStack: undoStack,
       redoStack: redoStack,
     );
@@ -482,15 +486,16 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
   void redo() {
     if (!state.canRedo) return;
 
-    final redoStack = List<List<Stroke>>.from(state.redoStack);
-    final next = redoStack.removeLast();
+    final redoStack = [...state.redoStack];
+    final (nextStrokes, nextTexts) = redoStack.removeLast();
     final undoStack = [
       ...state.undoStack,
-      List<Stroke>.from(state.strokes)
+      (List<Stroke>.from(state.strokes), List<TextElement>.from(state.textElements)),
     ];
 
     state = state.copyWith(
-      strokes: next,
+      strokes: nextStrokes,
+      textElements: nextTexts,
       undoStack: undoStack,
       redoStack: redoStack,
     );
@@ -509,10 +514,12 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
   // ─────────────── Text elements ───────────────
 
   void addTextElement(TextElement element) {
+    _pushUndoState();
     final updated = [...state.textElements, element];
     state = state.copyWith(
       textElements: updated,
       activeTextId: () => element.id,
+      redoStack: [],
     );
     _markDirty();
   }
@@ -526,12 +533,22 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
   }
 
   void deleteTextElement(String id) {
+    _pushUndoState();
     final updated = state.textElements.where((e) => e.id != id).toList();
-    state = state.copyWith(textElements: updated, activeTextId: () => null);
+    state = state.copyWith(
+      textElements: updated,
+      activeTextId: () => null,
+      redoStack: [],
+    );
     _markDirty();
   }
 
   void setActiveText(String? id) {
+    // Push undo when activating an existing text element so that typing
+    // changes can be undone in a single step.
+    if (id != null) {
+      _pushUndoState();
+    }
     state = state.copyWith(activeTextId: () => id);
   }
 

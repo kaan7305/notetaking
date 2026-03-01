@@ -6,7 +6,6 @@
 ## High Priority
 
 ### Canvas / Drawing
-- [ ] Fix undo/redo to also track text element changes (currently undo only restores strokes)
 - [ ] Canvas-to-image capture for AI Check/Solve mode (imageBase64 field exists but is never populated)
 - [ ] Text element resize handle (width is fixed, hard to widen text boxes)
 
@@ -37,3 +36,4 @@
 ## Completed
 - [x] 2026-03-01: All PLAN.md phases 1–8 implemented
 - [x] 2026-03-01: Drag-to-move for selected strokes and text elements
+- [x] 2026-03-01: Fix undo/redo to track text element changes (now saves both strokes + text in stack)

@@ -38,12 +38,12 @@ void main() {
     });
 
     test('canUndo is true when undo stack is not empty', () {
-      final state = CanvasState(undoStack: [[]]);
+      final state = CanvasState(undoStack: [(<Stroke>[], <TextElement>[])]);
       expect(state.canUndo, true);
     });
 
     test('canRedo is true when redo stack is not empty', () {
-      final state = CanvasState(redoStack: [[]]);
+      final state = CanvasState(redoStack: [(<Stroke>[], <TextElement>[])]);
       expect(state.canRedo, true);
     });
 
