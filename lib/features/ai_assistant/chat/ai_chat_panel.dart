@@ -13,7 +13,15 @@ import 'chat_message_bubble.dart';
 class AiChatPanel extends ConsumerStatefulWidget {
   final String courseId;
 
-  const AiChatPanel({super.key, required this.courseId});
+  /// Optional callback that captures the current canvas page as a base64 PNG.
+  /// Called automatically in [AiMode.check] and [AiMode.solve] modes.
+  final Future<String?> Function()? captureCanvas;
+
+  const AiChatPanel({
+    super.key,
+    required this.courseId,
+    this.captureCanvas,
+  });
 
   @override
   ConsumerState<AiChatPanel> createState() => _AiChatPanelState();
@@ -30,11 +38,23 @@ class _AiChatPanelState extends ConsumerState<AiChatPanel> {
     super.dispose();
   }
 
-  void _send() {
+  Future<void> _send() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
     _controller.clear();
-    ref.read(aiChatProvider(widget.courseId).notifier).sendMessage(text);
+
+    // For Check and Solve modes, capture the current canvas page as an image.
+    String? imageBase64;
+    final mode =
+        ref.read(aiChatProvider(widget.courseId)).currentMode;
+    if ((mode == AiMode.check || mode == AiMode.solve) &&
+        widget.captureCanvas != null) {
+      imageBase64 = await widget.captureCanvas!();
+    }
+
+    ref
+        .read(aiChatProvider(widget.courseId).notifier)
+        .sendMessage(text, imageBase64: imageBase64);
     _scrollToBottom();
   }
 
@@ -54,6 +74,13 @@ class _AiChatPanelState extends ConsumerState<AiChatPanel> {
   Widget build(BuildContext context) {
     final chatState = ref.watch(aiChatProvider(widget.courseId));
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Auto-scroll to the bottom when the AI finishes responding.
+    ref.listen<AiChatState>(aiChatProvider(widget.courseId), (prev, next) {
+      if ((prev?.isLoading ?? false) && !next.isLoading) {
+        _scrollToBottom();
+      }
+    });
 
     return Container(
       width: 360,

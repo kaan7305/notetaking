@@ -19,6 +19,10 @@ class DrawingCanvas extends ConsumerStatefulWidget {
   final Color backgroundColor;
   final double lineSpacing;
 
+  /// Optional key attached to the inner [RepaintBoundary] so callers can
+  /// capture the rendered canvas as an image (e.g. for AI Check/Solve mode).
+  final GlobalKey? captureKey;
+
   const DrawingCanvas({
     super.key,
     required this.pageId,
@@ -26,6 +30,7 @@ class DrawingCanvas extends ConsumerStatefulWidget {
     required this.pageSize,
     this.backgroundColor = const Color(0xFFFFFFFF),
     this.lineSpacing = 32.0,
+    this.captureKey,
   });
 
   @override
@@ -75,6 +80,7 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
       },
       child: ClipRect(
       child: RepaintBoundary(
+        key: widget.captureKey,
         child: Listener(
           onPointerDown: (event) {
             _focusNode.requestFocus();

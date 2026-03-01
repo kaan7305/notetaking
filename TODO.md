@@ -6,12 +6,10 @@
 ## High Priority
 
 ### Canvas / Drawing
-- [ ] Canvas-to-image capture for AI Check/Solve mode (imageBase64 field exists but is never populated)
 - [ ] Text element resize handle (width is fixed, hard to widen text boxes)
 
 ### AI Assistant
-- [ ] Wire up canvas image capture for Check mode (capture selected area or visible canvas as base64)
-- [ ] Auto-scroll chat to latest message after AI response (currently only scrolls on send)
+- [ ] (none remaining at this priority)
 
 ### Stability / Correctness
 - [ ] Add error feedback when DB load fails on canvas open (currently silent empty canvas)
@@ -37,3 +35,5 @@
 - [x] 2026-03-01: All PLAN.md phases 1–8 implemented
 - [x] 2026-03-01: Drag-to-move for selected strokes and text elements
 - [x] 2026-03-01: Fix undo/redo to track text element changes (now saves both strokes + text in stack)
+- [x] 2026-03-01: Canvas-to-image capture for AI Check/Solve mode (RepaintBoundary GlobalKey, base64 PNG passed to sendMessage)
+- [x] 2026-03-01: Auto-scroll chat to latest message after AI response (ref.listen on isLoading)

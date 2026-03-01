@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:study_notebook/app/colors.dart';
@@ -32,6 +36,27 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
   bool _showPageSidebar = true;
   bool _showAiPanel = false;
   String? _selectedPageId;
+
+  /// Key attached to the [RepaintBoundary] inside [DrawingCanvas].
+  /// Used to capture the current page as a PNG for AI Check/Solve mode.
+  final _canvasCaptureKey = GlobalKey();
+
+  /// Captures the visible canvas and returns a base64-encoded PNG string.
+  /// Returns null if capture fails.
+  Future<String?> _captureCanvas() async {
+    try {
+      final boundary = _canvasCaptureKey.currentContext
+          ?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null) return null;
+      final image = await boundary.toImage(pixelRatio: 1.5);
+      final byteData =
+          await image.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null) return null;
+      return base64Encode(byteData.buffer.asUint8List());
+    } catch (_) {
+      return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -144,12 +169,16 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
                         child: _CanvasArea(
                           key: ValueKey(currentPage.id),
                           page: currentPage,
+                          captureKey: _canvasCaptureKey,
                         ),
                       ),
 
                       // AI chat panel
                       if (_showAiPanel)
-                        AiChatPanel(courseId: widget.courseId),
+                        AiChatPanel(
+                          courseId: widget.courseId,
+                          captureCanvas: _captureCanvas,
+                        ),
                     ],
                   ),
                 ),
@@ -177,8 +206,9 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
 /// The scrollable canvas area that renders the page at its natural size.
 class _CanvasArea extends ConsumerStatefulWidget {
   final PageModel page;
+  final GlobalKey? captureKey;
 
-  const _CanvasArea({super.key, required this.page});
+  const _CanvasArea({super.key, required this.page, this.captureKey});
 
   @override
   ConsumerState<_CanvasArea> createState() => _CanvasAreaState();
@@ -250,6 +280,7 @@ class _CanvasAreaState extends ConsumerState<_CanvasArea> {
               pageSize: pageSize,
               backgroundColor: _hexToColor(widget.page.backgroundColor),
               lineSpacing: widget.page.lineSpacing,
+              captureKey: widget.captureKey,
             ),
           ),
         ),
