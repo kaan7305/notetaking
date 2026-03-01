@@ -1,4 +1,9 @@
 
+## 2026-03-01 (cycle 4)
+
+### Added
+- **Text element resize handle**: When a text box is active (selected for editing), a small blue drag grip appears below the right edge of the text field. Dragging it horizontally changes `TextElement.width`, clamped to 80–800 px. The change is auto-saved via the existing debounced save pipeline. The handle uses `SystemMouseCursors.resizeLeftRight` on desktop for a clear affordance.
+
 ## 2026-03-01 (cycle 3)
 
 ### Added

@@ -6,7 +6,7 @@
 ## High Priority
 
 ### Canvas / Drawing
-- [ ] Text element resize handle (width is fixed, hard to widen text boxes)
+- (none remaining at this priority)
 
 ### AI Assistant
 - [ ] (none remaining at this priority)
@@ -37,3 +37,4 @@
 - [x] 2026-03-01: Fix undo/redo to track text element changes (now saves both strokes + text in stack)
 - [x] 2026-03-01: Canvas-to-image capture for AI Check/Solve mode (RepaintBoundary GlobalKey, base64 PNG passed to sendMessage)
 - [x] 2026-03-01: Auto-scroll chat to latest message after AI response (ref.listen on isLoading)
+- [x] 2026-03-01: Text element resize handle (drag grip at right edge of active text box to widen/narrow)

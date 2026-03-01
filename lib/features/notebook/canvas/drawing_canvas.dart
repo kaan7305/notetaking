@@ -546,6 +546,28 @@ class _TextBoxState extends State<_TextBox> {
   Widget build(BuildContext context) {
     final canDrag = !widget.isActive && widget.onPositionChanged != null;
 
+    final textField = TextField(
+      controller: _ctrl,
+      focusNode: _focus,
+      maxLines: null,
+      style: TextStyle(
+        fontSize: widget.element.fontSize,
+        color: _textColor,
+        fontFamily: widget.element.fontFamily == 'system'
+            ? null
+            : widget.element.fontFamily,
+      ),
+      decoration: const InputDecoration(
+        border: InputBorder.none,
+        isDense: true,
+        contentPadding: EdgeInsets.all(4),
+        hintText: 'Type here...',
+      ),
+      onChanged: (text) {
+        widget.onChanged(widget.element.copyWith(content: text));
+      },
+    );
+
     final row = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -555,27 +577,7 @@ class _TextBoxState extends State<_TextBox> {
             onTap: canDrag ? null : widget.onTap,
             child: Container(
               decoration: _boxDecoration,
-              child: TextField(
-                controller: _ctrl,
-                focusNode: _focus,
-                maxLines: null,
-                style: TextStyle(
-                  fontSize: widget.element.fontSize,
-                  color: _textColor,
-                  fontFamily: widget.element.fontFamily == 'system'
-                      ? null
-                      : widget.element.fontFamily,
-                ),
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  isDense: true,
-                  contentPadding: EdgeInsets.all(4),
-                  hintText: 'Type here...',
-                ),
-                onChanged: (text) {
-                  widget.onChanged(widget.element.copyWith(content: text));
-                },
-              ),
+              child: textField,
             ),
           ),
         ),
@@ -607,6 +609,48 @@ class _TextBoxState extends State<_TextBox> {
       ],
     );
 
+    // When active, overlay a resize grip at the right edge of the text field
+    // so the user can drag to widen/narrow the box.
+    Widget content = widget.isActive
+        ? Stack(
+            clipBehavior: Clip.none,
+            children: [
+              row,
+              Positioned(
+                // Centre the grip on the right edge of the text field area.
+                // text field width = element.width; grip width = 18
+                left: widget.element.width - 9,
+                bottom: -10,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onPanUpdate: (details) {
+                    final newWidth =
+                        (widget.element.width + details.delta.dx)
+                            .clamp(80.0, 800.0);
+                    widget.onChanged(widget.element.copyWith(width: newWidth));
+                  },
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.resizeLeftRight,
+                    child: Container(
+                      width: 18,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                      child: const Icon(
+                        Icons.drag_handle_rounded,
+                        size: 10,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          )
+        : row;
+
     return Positioned(
       left: widget.element.x,
       top: widget.element.y,
@@ -622,9 +666,9 @@ class _TextBoxState extends State<_TextBox> {
                   widget.element.y + details.delta.dy,
                 );
               },
-              child: row,
+              child: content,
             )
-          : row,
+          : content,
     );
   }
 }
