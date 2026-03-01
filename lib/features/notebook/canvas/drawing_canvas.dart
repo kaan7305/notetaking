@@ -56,12 +56,12 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
       focusNode: _focusNode,
       onKeyEvent: (node, event) {
         if (event is KeyDownEvent &&
-            canvasState.currentTool == ToolType.pointer) {
-          if (event.logicalKey == LogicalKeyboardKey.delete ||
-              event.logicalKey == LogicalKeyboardKey.backspace) {
+            (event.logicalKey == LogicalKeyboardKey.delete ||
+                event.logicalKey == LogicalKeyboardKey.backspace)) {
+          if (canvasState.hasSelection) {
             ref
                 .read(canvasProvider(widget.pageId).notifier)
-                .deleteSelectedStroke();
+                .deleteSelectedStrokes();
             return KeyEventResult.handled;
           }
         }
@@ -75,6 +75,13 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
             final notifier = ref.read(canvasProvider(widget.pageId).notifier);
             if (canvasState.currentTool == ToolType.text) {
               _createTextAt(event.localPosition, notifier, canvasState);
+              return;
+            }
+            // Lasso: tap outside to clear existing selection.
+            if (canvasState.currentTool == ToolType.lasso &&
+                canvasState.hasSelection &&
+                !canvasState.isSelecting) {
+              notifier.clearSelection();
               return;
             }
             notifier.onPointerDown(
@@ -120,7 +127,10 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
                   painter: StrokePainter(
                     strokes: canvasState.strokes,
                     activeStroke: canvasState.activeStroke,
-                    selectedStrokeId: canvasState.selectedStrokeId,
+                    selectedStrokeIds: canvasState.selectedStrokeIds,
+                    selectionLassoPoints: canvasState.selectionLassoPoints,
+                    selectionRect: canvasState.selectionRect,
+                    isSelecting: canvasState.isSelecting,
                   ),
                 ),
                 // Text elements.
@@ -143,6 +153,17 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
                       ref
                           .read(canvasProvider(widget.pageId).notifier)
                           .setActiveText(null);
+                    },
+                  ),
+                // Floating selection action menu.
+                if (canvasState.hasSelection && !canvasState.isSelecting)
+                  _SelectionActionMenu(
+                    selectedCount: canvasState.selectedStrokeIds.length,
+                    selectionBounds: _computeSelectionBounds(canvasState),
+                    onDelete: () {
+                      ref
+                          .read(canvasProvider(widget.pageId).notifier)
+                          .deleteSelectedStrokes();
                     },
                   ),
                 // Cursor preview overlay.
@@ -193,9 +214,80 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
         return SystemMouseCursors.text;
       case ToolType.pointer:
         return SystemMouseCursors.basic;
+      case ToolType.lasso:
+        return SystemMouseCursors.precise;
       default:
         return SystemMouseCursors.none;
     }
+  }
+
+  Rect _computeSelectionBounds(CanvasState canvasState) {
+    double minX = double.infinity, minY = double.infinity;
+    double maxX = double.negativeInfinity, maxY = double.negativeInfinity;
+
+    for (final stroke in canvasState.strokes) {
+      if (!canvasState.selectedStrokeIds.contains(stroke.id)) continue;
+      for (final point in stroke.points) {
+        if (point.x < minX) minX = point.x;
+        if (point.y < minY) minY = point.y;
+        if (point.x > maxX) maxX = point.x;
+        if (point.y > maxY) maxY = point.y;
+      }
+    }
+
+    if (minX == double.infinity) return Rect.zero;
+    return Rect.fromLTRB(minX, minY, maxX, maxY);
+  }
+}
+
+/// Floating action menu shown above selected strokes.
+class _SelectionActionMenu extends StatelessWidget {
+  final int selectedCount;
+  final Rect selectionBounds;
+  final VoidCallback onDelete;
+
+  const _SelectionActionMenu({
+    required this.selectedCount,
+    required this.selectionBounds,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final menuY = (selectionBounds.top - 50).clamp(0.0, double.infinity);
+    final menuX = (selectionBounds.center.dx - 60).clamp(0.0, double.infinity);
+
+    return Positioned(
+      left: menuX,
+      top: menuY,
+      child: Material(
+        elevation: 4,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('$selectedCount selected',
+                  style: const TextStyle(fontSize: 12, color: Colors.black87)),
+              const SizedBox(width: 8),
+              IconButton(
+                icon: const Icon(Icons.delete, size: 20, color: Colors.redAccent),
+                onPressed: onDelete,
+                tooltip: 'Delete selected',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

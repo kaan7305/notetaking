@@ -17,6 +17,7 @@ _$StrokeImpl _$$StrokeImplFromJson(Map<String, dynamic> json) => _$StrokeImpl(
       .toList(),
   createdAt: DateTime.parse(json['createdAt'] as String),
   isDeleted: json['isDeleted'] as bool? ?? false,
+  penStyle: json['penStyle'] as String? ?? 'standard',
 );
 
 Map<String, dynamic> _$$StrokeImplToJson(_$StrokeImpl instance) =>
@@ -29,4 +30,5 @@ Map<String, dynamic> _$$StrokeImplToJson(_$StrokeImpl instance) =>
       'points': instance.points,
       'createdAt': instance.createdAt.toIso8601String(),
       'isDeleted': instance.isDeleted,
+      'penStyle': instance.penStyle,
     };

@@ -10,3 +10,5 @@ export 'course.dart';
 export 'document.dart';
 export 'source_reference.dart';
 export 'ai_message.dart';
+export 'pen_style.dart';
+export 'selection_mode.dart';

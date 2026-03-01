@@ -27,6 +27,7 @@ class StrokeDao {
             jsonEncode(stroke.points.map((p) => p.toJson()).toList()),
         'created_at': stroke.createdAt.millisecondsSinceEpoch,
         'is_deleted': stroke.isDeleted ? 1 : 0,
+        'pen_style': stroke.penStyle,
       };
 
   Stroke _fromMap(Map<String, dynamic> map) {
@@ -45,6 +46,7 @@ class StrokeDao {
       createdAt:
           DateTime.fromMillisecondsSinceEpoch(map['created_at'] as int),
       isDeleted: (map['is_deleted'] as int) == 1,
+      penStyle: (map['pen_style'] as String?) ?? 'standard',
     );
   }
 

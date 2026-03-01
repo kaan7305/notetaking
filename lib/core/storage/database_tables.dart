@@ -58,7 +58,8 @@ class DatabaseTables {
       stroke_width REAL NOT NULL,
       points TEXT NOT NULL,
       created_at INTEGER NOT NULL,
-      is_deleted INTEGER DEFAULT 0
+      is_deleted INTEGER DEFAULT 0,
+      pen_style TEXT DEFAULT 'standard'
     )
   ''';
 

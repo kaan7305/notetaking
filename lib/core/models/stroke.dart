@@ -16,6 +16,7 @@ class Stroke with _$Stroke {
     required List<StrokePoint> points,
     required DateTime createdAt,
     @Default(false) bool isDeleted,
+    @Default('standard') String penStyle,
   }) = _Stroke;
 
   factory Stroke.fromJson(Map<String, dynamic> json) =>

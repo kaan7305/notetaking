@@ -31,9 +31,10 @@ void main() {
       expect(state.activeStrokeWidth, 25.0);
     });
 
-    test('activeStrokeWidth returns 20.0 for eraser', () {
+    test('activeStrokeWidth returns eraserRadius * 2 for eraser', () {
       const state = CanvasState(currentTool: ToolType.eraser);
-      expect(state.activeStrokeWidth, 20.0);
+      // default eraserRadius is 15.0, so activeStrokeWidth = 30.0
+      expect(state.activeStrokeWidth, 30.0);
     });
 
     test('canUndo is true when undo stack is not empty', () {
@@ -66,6 +67,40 @@ void main() {
       final state = CanvasState(activeStroke: stroke);
       final copy = state.copyWith(activeStroke: () => null);
       expect(copy.activeStroke, isNull);
+    });
+
+    test('default pen style is standard', () {
+      const state = CanvasState();
+      expect(state.currentPenStyle, PenStyle.standard);
+    });
+
+    test('selectedStrokeIds defaults to empty set', () {
+      const state = CanvasState();
+      expect(state.selectedStrokeIds, isEmpty);
+      expect(state.hasSelection, false);
+    });
+
+    test('hasSelection is true when selectedStrokeIds is non-empty', () {
+      const state = CanvasState(selectedStrokeIds: {'id1', 'id2'});
+      expect(state.hasSelection, true);
+      expect(state.selectedStrokeIds.length, 2);
+    });
+
+    test('copyWith can update pen style', () {
+      const state = CanvasState();
+      final copy = state.copyWith(currentPenStyle: PenStyle.calligraphy);
+      expect(copy.currentPenStyle, PenStyle.calligraphy);
+    });
+
+    test('copyWith can update selectionMode', () {
+      const state = CanvasState();
+      final copy = state.copyWith(selectionMode: SelectionMode.box);
+      expect(copy.selectionMode, SelectionMode.box);
+    });
+
+    test('default selectionMode is freeform', () {
+      const state = CanvasState();
+      expect(state.selectionMode, SelectionMode.freeform);
     });
   });
 }

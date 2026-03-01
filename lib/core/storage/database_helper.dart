@@ -33,7 +33,7 @@ class DatabaseHelper {
 
     return openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -52,6 +52,11 @@ class DatabaseHelper {
       );
       await db.execute(
         'ALTER TABLE pages ADD COLUMN line_spacing REAL DEFAULT 32.0',
+      );
+    }
+    if (oldVersion < 3) {
+      await db.execute(
+        "ALTER TABLE strokes ADD COLUMN pen_style TEXT DEFAULT 'standard'",
       );
     }
   }

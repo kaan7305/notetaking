@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -49,7 +50,10 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
   void selectTool(ToolType tool) {
     state = state.copyWith(
       currentTool: tool,
-      selectedStrokeId: () => null,
+      selectedStrokeIds: {},
+      selectionLassoPoints: () => null,
+      selectionRect: () => null,
+      isSelecting: false,
     );
   }
 
@@ -77,11 +81,31 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
     state = state.copyWith(hoverPosition: () => null);
   }
 
+  // ─────────────── Pen style ───────────────
+
+  void selectPenStyle(PenStyle style) {
+    final config = PenStyleConfig.forStyle(style);
+    state = state.copyWith(
+      currentPenStyle: style,
+      strokeWidth: config.defaultWidth,
+    );
+  }
+
+  // ─────────────── Selection mode ───────────────
+
+  void setSelectionMode(SelectionMode mode) {
+    state = state.copyWith(selectionMode: mode);
+  }
+
   // ─────────────── Drawing ───────────────
 
   void onPointerDown(Offset position, double pressure) {
     if (state.currentTool == ToolType.pointer) {
       _hitTestStroke(position);
+      return;
+    }
+    if (state.currentTool == ToolType.lasso) {
+      _startSelection(position);
       return;
     }
     if (state.currentTool == ToolType.eraser) {
@@ -113,6 +137,7 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
       strokeWidth: state.activeStrokeWidth,
       points: [point],
       createdAt: DateTime.now(),
+      penStyle: state.currentPenStyle.name,
     );
 
     state = state.copyWith(activeStroke: () => stroke);
@@ -121,6 +146,10 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
   void onPointerMove(Offset position, double pressure) {
     if (state.currentTool == ToolType.eraser) {
       _eraseAt(position);
+      return;
+    }
+    if (state.currentTool == ToolType.lasso && state.isSelecting) {
+      _updateSelection(position);
       return;
     }
 
@@ -142,12 +171,18 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
       strokeWidth: active.strokeWidth,
       points: [...active.points, point],
       createdAt: active.createdAt,
+      penStyle: active.penStyle,
     );
 
     state = state.copyWith(activeStroke: () => updated);
   }
 
   void onPointerUp() {
+    if (state.currentTool == ToolType.lasso && state.isSelecting) {
+      _finalizeSelection();
+      return;
+    }
+
     final active = state.activeStroke;
     if (active == null) return;
 
@@ -212,21 +247,131 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
       }
     }
 
-    final newId = bestDist <= threshold ? bestId : null;
-    state = state.copyWith(selectedStrokeId: () => newId);
+    if (bestDist <= threshold && bestId != null) {
+      state = state.copyWith(selectedStrokeIds: {bestId});
+    } else {
+      state = state.copyWith(selectedStrokeIds: {});
+    }
   }
 
-  void deleteSelectedStroke() {
-    final id = state.selectedStrokeId;
-    if (id == null) return;
+  void deleteSelectedStroke() => deleteSelectedStrokes();
+
+  void deleteSelectedStrokes() {
+    if (!state.hasSelection) return;
     _pushUndoState();
-    final newStrokes = state.strokes.where((s) => s.id != id).toList();
+    final newStrokes = state.strokes
+        .where((s) => !state.selectedStrokeIds.contains(s.id))
+        .toList();
     state = state.copyWith(
       strokes: newStrokes,
-      selectedStrokeId: () => null,
+      selectedStrokeIds: {},
+      selectionLassoPoints: () => null,
+      selectionRect: () => null,
       redoStack: [],
     );
     _markDirty();
+  }
+
+  // ─────────────── Lasso / Box selection ───────────────
+
+  void _startSelection(Offset position) {
+    if (state.selectionMode == SelectionMode.freeform) {
+      state = state.copyWith(
+        selectionLassoPoints: () => [position],
+        selectionRect: () => null,
+        selectedStrokeIds: {},
+        isSelecting: true,
+      );
+    } else {
+      state = state.copyWith(
+        selectionRect: () => Rect.fromPoints(position, position),
+        selectionLassoPoints: () => null,
+        selectedStrokeIds: {},
+        isSelecting: true,
+      );
+    }
+  }
+
+  void _updateSelection(Offset position) {
+    if (state.selectionMode == SelectionMode.freeform) {
+      final points = [...(state.selectionLassoPoints ?? []), position];
+      state = state.copyWith(selectionLassoPoints: () => points);
+    } else {
+      final startPoint = state.selectionRect?.topLeft ?? position;
+      state = state.copyWith(
+        selectionRect: () => Rect.fromPoints(startPoint, position),
+      );
+    }
+  }
+
+  void _finalizeSelection() {
+    final selectedIds = <String>{};
+
+    if (state.selectionMode == SelectionMode.freeform) {
+      final lassoPoints = state.selectionLassoPoints;
+      if (lassoPoints == null || lassoPoints.length < 3) {
+        state = state.copyWith(
+          isSelecting: false,
+          selectionLassoPoints: () => null,
+        );
+        return;
+      }
+
+      final path = Path();
+      path.moveTo(lassoPoints[0].dx, lassoPoints[0].dy);
+      for (var i = 1; i < lassoPoints.length; i++) {
+        path.lineTo(lassoPoints[i].dx, lassoPoints[i].dy);
+      }
+      path.close();
+
+      for (final stroke in state.strokes) {
+        for (final point in stroke.points) {
+          if (path.contains(Offset(point.x, point.y))) {
+            selectedIds.add(stroke.id);
+            break;
+          }
+        }
+      }
+    } else {
+      final rect = state.selectionRect;
+      if (rect == null || rect.width.abs() < 5 || rect.height.abs() < 5) {
+        state = state.copyWith(
+          isSelecting: false,
+          selectionRect: () => null,
+        );
+        return;
+      }
+
+      final normalizedRect = Rect.fromLTRB(
+        rect.left < rect.right ? rect.left : rect.right,
+        rect.top < rect.bottom ? rect.top : rect.bottom,
+        rect.left < rect.right ? rect.right : rect.left,
+        rect.top < rect.bottom ? rect.bottom : rect.top,
+      );
+
+      for (final stroke in state.strokes) {
+        for (final point in stroke.points) {
+          if (normalizedRect.contains(Offset(point.x, point.y))) {
+            selectedIds.add(stroke.id);
+            break;
+          }
+        }
+      }
+    }
+
+    state = state.copyWith(
+      selectedStrokeIds: selectedIds,
+      isSelecting: false,
+    );
+  }
+
+  void clearSelection() {
+    state = state.copyWith(
+      selectedStrokeIds: {},
+      selectionLassoPoints: () => null,
+      selectionRect: () => null,
+      isSelecting: false,
+    );
   }
 
   // ─────────────── Undo / Redo ───────────────

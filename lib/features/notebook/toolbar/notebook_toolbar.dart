@@ -8,6 +8,8 @@ import 'package:study_notebook/core/utils/constants.dart';
 
 import '../canvas/canvas_notifier.dart';
 import 'color_picker_row.dart';
+import 'pen_style_picker.dart';
+import 'selection_toolbar.dart';
 import 'stroke_width_slider.dart';
 
 /// Top toolbar for the notebook screen with drawing tools, undo/redo, etc.
@@ -81,7 +83,13 @@ class _NotebookToolbarState extends ConsumerState<NotebookToolbar> {
                 icon: Icons.edit,
                 tool: ToolType.pen,
                 currentTool: canvasState.currentTool,
-                onPressed: () => _selectTool(ToolType.pen),
+                onPressed: () {
+                  if (canvasState.currentTool == ToolType.pen) {
+                    _showPenStylePicker(context, canvasState.currentPenStyle);
+                  } else {
+                    _selectTool(ToolType.pen);
+                  }
+                },
               ),
               _ToolButton(
                 icon: Icons.format_color_fill,
@@ -94,6 +102,12 @@ class _NotebookToolbarState extends ConsumerState<NotebookToolbar> {
                 tool: ToolType.eraser,
                 currentTool: canvasState.currentTool,
                 onPressed: () => _selectTool(ToolType.eraser),
+              ),
+              _ToolButton(
+                icon: Icons.gesture,
+                tool: ToolType.lasso,
+                currentTool: canvasState.currentTool,
+                onPressed: () => _selectTool(ToolType.lasso),
               ),
               _ToolButton(
                 icon: Icons.text_fields,
@@ -127,16 +141,17 @@ class _NotebookToolbarState extends ConsumerState<NotebookToolbar> {
 
               const Spacer(),
 
-              // Delete selected stroke (pointer mode).
-              if (canvasState.currentTool == ToolType.pointer &&
-                  canvasState.selectedStrokeId != null)
+              // Delete selected stroke(s).
+              if ((canvasState.currentTool == ToolType.pointer ||
+                      canvasState.currentTool == ToolType.lasso) &&
+                  canvasState.hasSelection)
                 _ToolbarButton(
                   icon: Icons.delete,
                   iconColor: Colors.redAccent,
                   onPressed: () => ref
                       .read(canvasProvider(widget.pageId).notifier)
-                      .deleteSelectedStroke(),
-                  tooltip: 'Delete selected stroke',
+                      .deleteSelectedStrokes(),
+                  tooltip: 'Delete selected',
                 ),
 
               // Undo / Redo.
@@ -199,6 +214,10 @@ class _NotebookToolbarState extends ConsumerState<NotebookToolbar> {
         // Text formatting toolbar — shown whenever text tool is active.
         if (canvasState.currentTool == ToolType.text)
           _TextFormatToolbar(pageId: widget.pageId),
+
+        // Selection toolbar — shown when lasso tool is active.
+        if (canvasState.currentTool == ToolType.lasso)
+          SelectionToolbar(pageId: widget.pageId),
       ],
     );
   }
@@ -213,6 +232,19 @@ class _NotebookToolbarState extends ConsumerState<NotebookToolbar> {
 
   void _undo() => ref.read(canvasProvider(widget.pageId).notifier).undo();
   void _redo() => ref.read(canvasProvider(widget.pageId).notifier).redo();
+
+  void _showPenStylePicker(BuildContext context, PenStyle current) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => PenStylePicker(
+        currentStyle: current,
+        onStyleSelected: (style) {
+          ref.read(canvasProvider(widget.pageId).notifier).selectPenStyle(style);
+          Navigator.pop(ctx);
+        },
+      ),
+    );
+  }
 }
 
 /// A tool selection button that highlights when active.

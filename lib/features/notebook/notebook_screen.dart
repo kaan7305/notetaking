@@ -151,7 +151,8 @@ class _CanvasAreaState extends ConsumerState<_CanvasArea> {
     final canvasState = ref.watch(canvasProvider(widget.page.id));
     final isDrawingTool = canvasState.currentTool == ToolType.pen ||
         canvasState.currentTool == ToolType.highlighter ||
-        canvasState.currentTool == ToolType.eraser;
+        canvasState.currentTool == ToolType.eraser ||
+        canvasState.currentTool == ToolType.lasso;
 
     // Use letter size by default; could be made configurable per notebook.
     const pageSize = Size(

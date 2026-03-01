@@ -84,6 +84,25 @@ class AppStrings {
   static const String lasso = 'Lasso';
 
   // ---------------------------------------------------------------------------
+  // Pen Styles
+  // ---------------------------------------------------------------------------
+  static const String penStyleStandard = 'Standard';
+  static const String penStyleCalligraphy = 'Calligraphy';
+  static const String penStyleFountain = 'Fountain';
+  static const String penStyleMarker = 'Marker';
+  static const String penStyleFineLiner = 'Fine Liner';
+  static const String penStylePencil = 'Pencil';
+  static const String selectPenStyle = 'Pen Style';
+
+  // ---------------------------------------------------------------------------
+  // Selection
+  // ---------------------------------------------------------------------------
+  static const String selectionLasso = 'Lasso Select';
+  static const String selectionBox = 'Box Select';
+  static const String deleteSelected = 'Delete Selected';
+  static const String clearSelection = 'Clear Selection';
+
+  // ---------------------------------------------------------------------------
   // AI Modes
   // ---------------------------------------------------------------------------
   static const String aiHint = 'Hint';

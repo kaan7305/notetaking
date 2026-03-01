@@ -31,6 +31,7 @@ mixin _$Stroke {
   List<StrokePoint> get points => throw _privateConstructorUsedError;
   DateTime get createdAt => throw _privateConstructorUsedError;
   bool get isDeleted => throw _privateConstructorUsedError;
+  String get penStyle => throw _privateConstructorUsedError;
 
   /// Serializes this Stroke to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -55,6 +56,7 @@ abstract class $StrokeCopyWith<$Res> {
     List<StrokePoint> points,
     DateTime createdAt,
     bool isDeleted,
+    String penStyle,
   });
 }
 
@@ -81,6 +83,7 @@ class _$StrokeCopyWithImpl<$Res, $Val extends Stroke>
     Object? points = null,
     Object? createdAt = null,
     Object? isDeleted = null,
+    Object? penStyle = null,
   }) {
     return _then(
       _value.copyWith(
@@ -116,6 +119,10 @@ class _$StrokeCopyWithImpl<$Res, $Val extends Stroke>
                 ? _value.isDeleted
                 : isDeleted // ignore: cast_nullable_to_non_nullable
                       as bool,
+            penStyle: null == penStyle
+                ? _value.penStyle
+                : penStyle // ignore: cast_nullable_to_non_nullable
+                      as String,
           )
           as $Val,
     );
@@ -139,6 +146,7 @@ abstract class _$$StrokeImplCopyWith<$Res> implements $StrokeCopyWith<$Res> {
     List<StrokePoint> points,
     DateTime createdAt,
     bool isDeleted,
+    String penStyle,
   });
 }
 
@@ -164,6 +172,7 @@ class __$$StrokeImplCopyWithImpl<$Res>
     Object? points = null,
     Object? createdAt = null,
     Object? isDeleted = null,
+    Object? penStyle = null,
   }) {
     return _then(
       _$StrokeImpl(
@@ -199,6 +208,10 @@ class __$$StrokeImplCopyWithImpl<$Res>
             ? _value.isDeleted
             : isDeleted // ignore: cast_nullable_to_non_nullable
                   as bool,
+        penStyle: null == penStyle
+            ? _value.penStyle
+            : penStyle // ignore: cast_nullable_to_non_nullable
+                  as String,
       ),
     );
   }
@@ -216,6 +229,7 @@ class _$StrokeImpl implements _Stroke {
     required final List<StrokePoint> points,
     required this.createdAt,
     this.isDeleted = false,
+    this.penStyle = 'standard',
   }) : _points = points;
 
   factory _$StrokeImpl.fromJson(Map<String, dynamic> json) =>
@@ -246,10 +260,13 @@ class _$StrokeImpl implements _Stroke {
   @override
   @JsonKey()
   final bool isDeleted;
+  @override
+  @JsonKey()
+  final String penStyle;
 
   @override
   String toString() {
-    return 'Stroke(id: $id, pageId: $pageId, toolType: $toolType, color: $color, strokeWidth: $strokeWidth, points: $points, createdAt: $createdAt, isDeleted: $isDeleted)';
+    return 'Stroke(id: $id, pageId: $pageId, toolType: $toolType, color: $color, strokeWidth: $strokeWidth, points: $points, createdAt: $createdAt, isDeleted: $isDeleted, penStyle: $penStyle)';
   }
 
   @override
@@ -268,7 +285,9 @@ class _$StrokeImpl implements _Stroke {
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.isDeleted, isDeleted) ||
-                other.isDeleted == isDeleted));
+                other.isDeleted == isDeleted) &&
+            (identical(other.penStyle, penStyle) ||
+                other.penStyle == penStyle));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -283,6 +302,7 @@ class _$StrokeImpl implements _Stroke {
     const DeepCollectionEquality().hash(_points),
     createdAt,
     isDeleted,
+    penStyle,
   );
 
   /// Create a copy of Stroke
@@ -309,6 +329,7 @@ abstract class _Stroke implements Stroke {
     required final List<StrokePoint> points,
     required final DateTime createdAt,
     final bool isDeleted,
+    final String penStyle,
   }) = _$StrokeImpl;
 
   factory _Stroke.fromJson(Map<String, dynamic> json) = _$StrokeImpl.fromJson;
@@ -329,6 +350,8 @@ abstract class _Stroke implements Stroke {
   DateTime get createdAt;
   @override
   bool get isDeleted;
+  @override
+  String get penStyle;
 
   /// Create a copy of Stroke
   /// with the given fields replaced by the non-null parameter values.

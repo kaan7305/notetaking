@@ -7,12 +7,17 @@ class CanvasState {
   final Stroke? activeStroke;
   final List<TextElement> textElements;
   final String? activeTextId;
-  final String? selectedStrokeId;
+  final Set<String> selectedStrokeIds;
   final ToolType currentTool;
   final Color currentColor;
   final double strokeWidth;
   final double highlighterWidth;
   final double eraserRadius;
+  final PenStyle currentPenStyle;
+  final SelectionMode selectionMode;
+  final List<Offset>? selectionLassoPoints;
+  final Rect? selectionRect;
+  final bool isSelecting;
   final List<List<Stroke>> undoStack;
   final List<List<Stroke>> redoStack;
   final Offset canvasOffset;
@@ -24,12 +29,17 @@ class CanvasState {
     this.activeStroke,
     this.textElements = const [],
     this.activeTextId,
-    this.selectedStrokeId,
+    this.selectedStrokeIds = const {},
     this.currentTool = ToolType.pen,
     this.currentColor = const Color(0xFF000000),
     this.strokeWidth = 2.0,
     this.highlighterWidth = 20.0,
     this.eraserRadius = 15.0,
+    this.currentPenStyle = PenStyle.standard,
+    this.selectionMode = SelectionMode.freeform,
+    this.selectionLassoPoints,
+    this.selectionRect,
+    this.isSelecting = false,
     this.undoStack = const [],
     this.redoStack = const [],
     this.canvasOffset = Offset.zero,
@@ -52,18 +62,24 @@ class CanvasState {
 
   bool get canUndo => undoStack.isNotEmpty;
   bool get canRedo => redoStack.isNotEmpty;
+  bool get hasSelection => selectedStrokeIds.isNotEmpty;
 
   CanvasState copyWith({
     List<Stroke>? strokes,
     Stroke? Function()? activeStroke,
     List<TextElement>? textElements,
     String? Function()? activeTextId,
-    String? Function()? selectedStrokeId,
+    Set<String>? selectedStrokeIds,
     ToolType? currentTool,
     Color? currentColor,
     double? strokeWidth,
     double? highlighterWidth,
     double? eraserRadius,
+    PenStyle? currentPenStyle,
+    SelectionMode? selectionMode,
+    List<Offset>? Function()? selectionLassoPoints,
+    Rect? Function()? selectionRect,
+    bool? isSelecting,
     List<List<Stroke>>? undoStack,
     List<List<Stroke>>? redoStack,
     Offset? canvasOffset,
@@ -76,12 +92,21 @@ class CanvasState {
           activeStroke != null ? activeStroke() : this.activeStroke,
       textElements: textElements ?? this.textElements,
       activeTextId: activeTextId != null ? activeTextId() : this.activeTextId,
-      selectedStrokeId: selectedStrokeId != null ? selectedStrokeId() : this.selectedStrokeId,
+      selectedStrokeIds: selectedStrokeIds ?? this.selectedStrokeIds,
       currentTool: currentTool ?? this.currentTool,
       currentColor: currentColor ?? this.currentColor,
       strokeWidth: strokeWidth ?? this.strokeWidth,
       highlighterWidth: highlighterWidth ?? this.highlighterWidth,
       eraserRadius: eraserRadius ?? this.eraserRadius,
+      currentPenStyle: currentPenStyle ?? this.currentPenStyle,
+      selectionMode: selectionMode ?? this.selectionMode,
+      selectionLassoPoints: selectionLassoPoints != null
+          ? selectionLassoPoints()
+          : this.selectionLassoPoints,
+      selectionRect: selectionRect != null
+          ? selectionRect()
+          : this.selectionRect,
+      isSelecting: isSelecting ?? this.isSelecting,
       undoStack: undoStack ?? this.undoStack,
       redoStack: redoStack ?? this.redoStack,
       canvasOffset: canvasOffset ?? this.canvasOffset,
