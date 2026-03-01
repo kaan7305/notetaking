@@ -649,25 +649,52 @@ class _TextBoxState extends State<_TextBox> {
       },
     );
 
+    // Use an explicit SizedBox width so the right-edge resize handle can be
+    // positioned accurately via a Stack overlay (Expanded can't be used here
+    // because we need to know the exact text-area width for the handle).
+    final textContainer = Container(
+      width: widget.element.width,
+      decoration: _boxDecoration,
+      child: textField,
+    );
+
+    // When active: overlay a right-edge drag handle for resizing width.
+    // Stack(clipBehavior: Clip.none) lets the handle protrude slightly outside.
+    final textArea = widget.isActive
+        ? Stack(
+            clipBehavior: Clip.none,
+            children: [
+              GestureDetector(onTap: widget.onTap, child: textContainer),
+              Positioned(
+                right: -7,
+                top: 0,
+                bottom: 0,
+                child: _TextResizeHandle(
+                  onPanUpdate: (dx) {
+                    final newWidth =
+                        (widget.element.width + dx).clamp(80.0, 1200.0);
+                    widget.onChanged(widget.element.copyWith(width: newWidth));
+                  },
+                ),
+              ),
+            ],
+          )
+        : GestureDetector(
+            onTap: canDrag ? null : widget.onTap,
+            child: textContainer,
+          );
+
     final row = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        // Text field area — tappable to activate
-        Expanded(
-          child: GestureDetector(
-            onTap: canDrag ? null : widget.onTap,
-            child: Container(
-              decoration: _boxDecoration,
-              child: textField,
-            ),
-          ),
-        ),
-        // Delete button — separate gesture zone, only visible when active
+        textArea,
+        // Delete button — separate gesture zone, only visible when active.
         if (widget.isActive)
           GestureDetector(
             onTap: widget.onDelete,
             child: Padding(
-              padding: const EdgeInsets.only(left: 2),
+              padding: const EdgeInsets.only(left: 4),
               child: Container(
                 width: 24,
                 height: 24,
@@ -690,53 +717,10 @@ class _TextBoxState extends State<_TextBox> {
       ],
     );
 
-    // When active, overlay a resize grip at the right edge of the text field
-    // so the user can drag to widen/narrow the box.
-    Widget content = widget.isActive
-        ? Stack(
-            clipBehavior: Clip.none,
-            children: [
-              row,
-              Positioned(
-                // Centre the grip on the right edge of the text field area.
-                // text field width = element.width; grip width = 18
-                left: widget.element.width - 9,
-                bottom: -10,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onPanUpdate: (details) {
-                    final newWidth =
-                        (widget.element.width + details.delta.dx)
-                            .clamp(80.0, 800.0);
-                    widget.onChanged(widget.element.copyWith(width: newWidth));
-                  },
-                  child: MouseRegion(
-                    cursor: SystemMouseCursors.resizeLeftRight,
-                    child: Container(
-                      width: 18,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(3),
-                      ),
-                      child: const Icon(
-                        Icons.drag_handle_rounded,
-                        size: 10,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          )
-        : row;
-
     return Positioned(
       left: widget.element.x,
       top: widget.element.y,
-      width: widget.element.width + (widget.isActive ? 28 : 0),
-      // When draggable: wrap in GestureDetector that handles pan and tap.
+      // No explicit width — Row + SizedBox content determines the width naturally.
       child: canDrag
           ? GestureDetector(
               behavior: HitTestBehavior.opaque,
@@ -747,9 +731,53 @@ class _TextBoxState extends State<_TextBox> {
                   widget.element.y + details.delta.dy,
                 );
               },
-              child: content,
+              child: row,
             )
-          : content,
+          : row,
+    );
+  }
+}
+
+/// A thin vertical drag strip shown on the right edge of an active text box.
+/// Dragging it horizontally resizes the box width.
+class _TextResizeHandle extends StatefulWidget {
+  /// Called with the horizontal delta (dx) on each pan update.
+  final void Function(double dx) onPanUpdate;
+
+  const _TextResizeHandle({required this.onPanUpdate});
+
+  @override
+  State<_TextResizeHandle> createState() => _TextResizeHandleState();
+}
+
+class _TextResizeHandleState extends State<_TextResizeHandle> {
+  bool _hovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.resizeColumn,
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onPanUpdate: (d) => widget.onPanUpdate(d.delta.dx),
+        child: SizedBox(
+          width: 14,
+          child: Center(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 120),
+              width: _hovering ? 4 : 3,
+              height: double.infinity,
+              decoration: BoxDecoration(
+                color: AppColors.primary
+                    .withValues(alpha: _hovering ? 0.85 : 0.45),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

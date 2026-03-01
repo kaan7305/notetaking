@@ -1,9 +1,12 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import 'package:study_notebook/app/colors.dart';
 import 'package:study_notebook/core/models/models.dart';
@@ -55,6 +58,42 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
       return base64Encode(byteData.buffer.asUint8List());
     } catch (_) {
       return null;
+    }
+  }
+
+  /// Exports the current page as a high-resolution PNG and shares it via the
+  /// OS share sheet (iOS share sheet / Android share dialog).
+  Future<void> _exportPage() async {
+    // Show a brief loading indicator while we render.
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final boundary = _canvasCaptureKey.currentContext
+          ?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null) return;
+
+      final image = await boundary.toImage(pixelRatio: 2.0);
+      final byteData =
+          await image.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null) return;
+
+      final bytes = byteData.buffer.asUint8List();
+      final tempDir = await getTemporaryDirectory();
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final file = File('${tempDir.path}/page_$timestamp.png');
+      await file.writeAsBytes(bytes);
+
+      await Share.shareXFiles(
+        [XFile(file.path, mimeType: 'image/png', name: 'page_$timestamp.png')],
+        subject: AppStrings.exportPageSubject,
+      );
+    } catch (_) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: const Text(AppStrings.exportError),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.error,
+        ),
+      );
     }
   }
 
@@ -138,6 +177,7 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
                     setState(() => _showAiPanel = !_showAiPanel);
                   },
                   isAiPanelOpen: _showAiPanel,
+                  onExportPage: _exportPage,
                 ),
 
                 // Canvas + optional page sidebar

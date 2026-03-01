@@ -1,4 +1,9 @@
 
+## 2026-03-01 (cycle 6)
+
+### Improved
+- **Text element resize handle — right-edge vertical bar**: Replaced the previous bottom-pill drag grip with a discoverable right-edge vertical drag strip (`_TextResizeHandle`). The handle is overlaid on the right side of the active text box using a `Stack(clipBehavior: Clip.none)` so it never clips. It animates from 3 px to 4 px wide on hover and uses `SystemMouseCursors.resizeColumn` for a natural desktop affordance. The `_TextBox` layout was restructured from `Expanded` (which leaked width through the parent `Positioned`) to a `SizedBox(width: el.width)` so the text area has an exact, model-driven width at all times, and the outer `Positioned` no longer needs an explicit `width` argument.
+
 ## 2026-03-01 (cycle 5)
 
 ### Fixed

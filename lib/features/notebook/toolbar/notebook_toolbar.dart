@@ -18,6 +18,8 @@ class NotebookToolbar extends ConsumerStatefulWidget {
   final VoidCallback? onTogglePageSidebar;
   final VoidCallback? onToggleAiPanel;
   final bool isAiPanelOpen;
+  /// Called when the user taps the export (share) button.
+  final VoidCallback? onExportPage;
 
   const NotebookToolbar({
     super.key,
@@ -25,6 +27,7 @@ class NotebookToolbar extends ConsumerStatefulWidget {
     this.onTogglePageSidebar,
     this.onToggleAiPanel,
     this.isAiPanelOpen = false,
+    this.onExportPage,
   });
 
   @override
