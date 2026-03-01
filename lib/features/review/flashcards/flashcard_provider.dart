@@ -137,17 +137,31 @@ class FlashcardNotifier extends StateNotifier<FlashcardState> {
 
     switch (result) {
       case Success(data: final data):
-        final cardsJson = data['flashcards'] as List? ?? [];
-        final cards = cardsJson.asMap().entries.map((entry) {
-          final c = entry.value as Map<String, dynamic>;
-          return Flashcard(
-            id: const Uuid().v4(),
-            front: c['front'] as String? ?? '',
-            back: c['back'] as String? ?? '',
-            sourceDocument: c['sourceDocument'] as String?,
-            sourcePage: c['sourcePage'] as int?,
+        List<Flashcard> cards;
+        try {
+          final cardsJson = data['flashcards'] as List? ?? [];
+          cards = cardsJson.asMap().entries.map((entry) {
+            Map<String, dynamic> c;
+            try {
+              c = entry.value as Map<String, dynamic>;
+            } catch (_) {
+              c = {};
+            }
+            return Flashcard(
+              id: const Uuid().v4(),
+              front: c['front'] as String? ?? '',
+              back: c['back'] as String? ?? '',
+              sourceDocument: c['sourceDocument'] as String?,
+              sourcePage: (c['sourcePage'] as num?)?.toInt(),
+            );
+          }).toList();
+        } catch (e) {
+          state = state.copyWith(
+            isGenerating: false,
+            error: () => 'Failed to parse flashcards from server response.',
           );
-        }).toList();
+          return;
+        }
 
         state = state.copyWith(
           cards: cards,

@@ -3,6 +3,10 @@
 ## In Progress
 - (none)
 
+## Completed (cycle 20)
+- [x] 2026-03-01: Persist practice questions to SQLite between sessions — `PracticeQuestionDao` + schema v7 migration; `PracticeNotifier` loads history on init and persists after each `generateQuestions()`; `QuizScreen` shows a spinner while history loads; `isLoadingHistory` added to `PracticeState`
+- [x] 2026-03-01: Add JSON parse safety to `flashcard_provider` and `practice_provider` — each raw JSON element wrapped in try/catch; `sourcePage` cast changed to `(as num?)?.toInt()` to handle JSON doubles
+
 ## Completed (cycle 18 — theme toggle)
 - [x] 2026-03-01: Persistent dark/light/system theme toggle in Settings — `preferences` SQLite table (migration v6), `PreferencesDao`, `ThemeSettingNotifier` / `themeSettingProvider`, `SegmentedButton<ThemeMode>` in Settings screen, `main.dart` wired to provider
 
@@ -14,8 +18,6 @@
 - [x] 2026-03-01: Quiz keyboard shortcuts — A/B/C/D select answer options, Space/Enter advances to next question; `_QuestionView` converted to `StatefulWidget` with `FocusNode` (auto-focused on mount); keyboard hint label below options switches text between "A / B / C / D to select" and "Space / Enter → Next Question"
 
 ## Potential future tasks
-- [ ] Persist practice questions to SQLite between sessions (like flashcards)
-- [ ] Add JSON parse safety (try/catch) around API response parsing in flashcard_provider and practice_provider
 - [ ] Offline sync mechanism — implement `SyncProvider` that queues is_synced=0 rows and pushes to Supabase on reconnect
 - [ ] Document viewer: highlight the snippet referenced by AI source citations
 

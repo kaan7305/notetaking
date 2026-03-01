@@ -17,6 +17,13 @@ class QuizScreen extends ConsumerWidget {
     final state = ref.watch(practiceProvider(courseId));
     final notifier = ref.read(practiceProvider(courseId).notifier);
 
+    // Show a compact spinner while SQLite history loads (typically < 100 ms).
+    if (state.isLoadingHistory) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Practice Quiz'),

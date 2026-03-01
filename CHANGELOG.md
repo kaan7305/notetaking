@@ -1,4 +1,18 @@
 
+## 2026-03-01 (cycle 20 — practice question persistence + JSON safety)
+
+### Added
+- **Persist practice questions to SQLite** (`practice_question_dao.dart`, `practice_provider.dart`):
+  - New `practice_questions` table (schema v7, migration added to `DatabaseMigrations`). Columns: `id`, `course_id`, `sort_order`, `question`, `options_json` (JSON array), `correct_index`, `explanation`, `source_document`, `source_page`, `created_at`.
+  - `PracticeQuestionDao` — mirrors `FlashcardDao`: `getByCourseId`, `replaceByCourseId` (transactional), `deleteAllByCourseId`.
+  - `PracticeNotifier` now loads the last generated question set on construction (`_loadHistory`) and persists after every `generateQuestions()` call, exactly matching the flashcard flow. A new `isLoadingHistory` field drives a compact `CircularProgressIndicator` shown by `QuizScreen` while SQLite boots.
+  - Options are stored as a JSON array string and decoded with a safe try/catch on read, so malformed rows never crash the provider.
+
+### Improved
+- **JSON parse safety** in `flashcard_provider.dart` and `practice_provider.dart`:
+  - Each raw JSON element is cast inside a try/catch block that falls back to an empty map so a single malformed API response entry doesn't abort the whole list.
+  - `sourcePage` casts changed from `as int?` to `(as num?)?.toInt()` so integer-valued JSON doubles (common in some API responses) decode correctly.
+
 ## 2026-03-01 (cycle 18 — theme mode toggle)
 
 ### Added

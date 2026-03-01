@@ -25,11 +25,12 @@ import 'package:sqflite/sqflite.dart';
 /// | 4       | `text_elements`: added `is_bold INTEGER DEFAULT 0`, `is_italic INTEGER DEFAULT 0` |
 /// | 5       | new `flashcards` table + `idx_flashcards_course_id` index |
 /// | 6       | new `preferences` key-value table for user settings (e.g. theme mode) |
+/// | 7       | new `practice_questions` table + `idx_practice_questions_course_id` index |
 class DatabaseMigrations {
   DatabaseMigrations._();
 
   /// The current schema version.  Bump this when adding a new migration.
-  static const int currentVersion = 6;
+  static const int currentVersion = 7;
 
   /// Map of target-version → ordered list of SQL statements to apply.
   ///
@@ -65,6 +66,21 @@ class DatabaseMigrations {
         key TEXT PRIMARY KEY,
         value TEXT NOT NULL
       )''',
+    ],
+    7: [
+      '''CREATE TABLE practice_questions (
+        id TEXT PRIMARY KEY,
+        course_id TEXT NOT NULL REFERENCES courses(id),
+        sort_order INTEGER NOT NULL,
+        question TEXT NOT NULL,
+        options_json TEXT NOT NULL,
+        correct_index INTEGER NOT NULL,
+        explanation TEXT NOT NULL,
+        source_document TEXT,
+        source_page INTEGER,
+        created_at INTEGER NOT NULL
+      )''',
+      'CREATE INDEX idx_practice_questions_course_id ON practice_questions(course_id)',
     ],
   };
 

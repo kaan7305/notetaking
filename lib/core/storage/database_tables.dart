@@ -177,6 +177,10 @@ class DatabaseTables {
     CREATE INDEX idx_flashcards_course_id ON flashcards(course_id)
   ''';
 
+  static const String indexPracticeQuestionsCourseId = '''
+    CREATE INDEX idx_practice_questions_course_id ON practice_questions(course_id)
+  ''';
+
   static const String indexCoursesIsSynced = '''
     CREATE INDEX idx_courses_is_synced ON courses(is_synced)
   ''';
@@ -211,6 +215,7 @@ class DatabaseTables {
         createDocuments,
         createAiMessages,
         createFlashcards,
+        createPracticeQuestions,
         createPreferences,
         // Indexes
         indexNotebooksCourseId,
@@ -220,6 +225,7 @@ class DatabaseTables {
         indexDocumentsCourseId,
         indexAiMessagesCourseId,
         indexFlashcardsCourseId,
+        indexPracticeQuestionsCourseId,
         indexCoursesIsSynced,
         indexNotebooksIsSynced,
         indexPagesIsSynced,

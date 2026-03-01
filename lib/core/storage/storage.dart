@@ -9,4 +9,5 @@ export 'document_dao.dart';
 export 'text_element_dao.dart';
 export 'ai_messages_dao.dart';
 export 'flashcard_dao.dart';
+export 'practice_question_dao.dart';
 export 'preferences_dao.dart';
