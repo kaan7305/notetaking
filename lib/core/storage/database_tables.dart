@@ -109,6 +109,19 @@ class DatabaseTables {
     )
   ''';
 
+  static const String createFlashcards = '''
+    CREATE TABLE flashcards (
+      id TEXT PRIMARY KEY,
+      course_id TEXT NOT NULL REFERENCES courses(id),
+      sort_order INTEGER NOT NULL,
+      front TEXT NOT NULL,
+      back TEXT NOT NULL,
+      source_document TEXT,
+      source_page INTEGER,
+      created_at INTEGER NOT NULL
+    )
+  ''';
+
   // ──────────────────────────────────────────────
   // CREATE INDEX statements
   // ──────────────────────────────────────────────
@@ -135,6 +148,10 @@ class DatabaseTables {
 
   static const String indexAiMessagesCourseId = '''
     CREATE INDEX idx_ai_messages_course_id ON ai_messages(course_id)
+  ''';
+
+  static const String indexFlashcardsCourseId = '''
+    CREATE INDEX idx_flashcards_course_id ON flashcards(course_id)
   ''';
 
   static const String indexCoursesIsSynced = '''
@@ -170,6 +187,7 @@ class DatabaseTables {
         createTextElements,
         createDocuments,
         createAiMessages,
+        createFlashcards,
         // Indexes
         indexNotebooksCourseId,
         indexPagesNotebookId,
@@ -177,6 +195,7 @@ class DatabaseTables {
         indexTextElementsPageId,
         indexDocumentsCourseId,
         indexAiMessagesCourseId,
+        indexFlashcardsCourseId,
         indexCoursesIsSynced,
         indexNotebooksIsSynced,
         indexPagesIsSynced,

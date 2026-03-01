@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:study_notebook/app/colors.dart';
@@ -17,6 +18,13 @@ class FlashcardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(flashcardProvider(courseId));
     final notifier = ref.read(flashcardProvider(courseId).notifier);
+
+    // Show a compact spinner while SQLite history loads (typically < 100 ms).
+    if (state.isLoadingHistory) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -41,6 +49,14 @@ class FlashcardScreen extends ConsumerWidget {
               icon: const Icon(Icons.restart_alt_rounded),
               tooltip: 'Restart from card 1',
               onPressed: () => notifier.reset(),
+            ),
+            // Regenerate button always visible so user can refresh from docs.
+            IconButton(
+              icon: const Icon(Icons.auto_awesome_outlined),
+              tooltip: 'Regenerate flashcards',
+              onPressed: state.isGenerating
+                  ? null
+                  : () => notifier.generateFlashcards(),
             ),
           ],
         ],

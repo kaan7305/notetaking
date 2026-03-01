@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 
 import 'package:study_notebook/core/api/api_client.dart';
 import 'package:study_notebook/core/api/api_endpoints.dart';
 import 'package:study_notebook/core/models/models.dart';
 import 'package:study_notebook/core/providers/api_provider.dart';
+import 'package:study_notebook/core/storage/storage.dart';
 
 class Flashcard {
   final String id;
@@ -26,6 +28,10 @@ class FlashcardState {
   final int currentIndex;
   final bool isFlipped;
   final bool isGenerating;
+
+  /// True while the persisted card set is being loaded from SQLite on init.
+  final bool isLoadingHistory;
+
   final String? error;
 
   const FlashcardState({
@@ -33,6 +39,7 @@ class FlashcardState {
     this.currentIndex = 0,
     this.isFlipped = false,
     this.isGenerating = false,
+    this.isLoadingHistory = false,
     this.error,
   });
 
@@ -49,6 +56,7 @@ class FlashcardState {
     int? currentIndex,
     bool? isFlipped,
     bool? isGenerating,
+    bool? isLoadingHistory,
     String? Function()? error,
   }) {
     return FlashcardState(
@@ -56,6 +64,7 @@ class FlashcardState {
       currentIndex: currentIndex ?? this.currentIndex,
       isFlipped: isFlipped ?? this.isFlipped,
       isGenerating: isGenerating ?? this.isGenerating,
+      isLoadingHistory: isLoadingHistory ?? this.isLoadingHistory,
       error: error != null ? error() : this.error,
     );
   }
@@ -63,10 +72,57 @@ class FlashcardState {
 
 class FlashcardNotifier extends StateNotifier<FlashcardState> {
   final ApiClient _apiClient;
+  final FlashcardDao _dao;
   final String _courseId;
 
-  FlashcardNotifier(this._apiClient, this._courseId)
-      : super(const FlashcardState());
+  FlashcardNotifier(this._apiClient, this._dao, this._courseId)
+      : super(const FlashcardState(isLoadingHistory: true)) {
+    _loadHistory();
+  }
+
+  // ──────────────────── persistence ────────────────────
+
+  /// Loads previously generated flashcards from SQLite on provider init.
+  Future<void> _loadHistory() async {
+    final result = await _dao.getByCourseId(_courseId);
+    switch (result) {
+      case Success(data: final rows):
+        final cards = rows
+            .map((r) => Flashcard(
+                  id: r.id,
+                  front: r.front,
+                  back: r.back,
+                  sourceDocument: r.sourceDocument,
+                  sourcePage: r.sourcePage,
+                ))
+            .toList();
+        state = state.copyWith(cards: cards, isLoadingHistory: false);
+      case Failure():
+        // On load failure start with empty state rather than blocking UX.
+        state = state.copyWith(isLoadingHistory: false);
+    }
+  }
+
+  /// Converts the in-memory card list to [FlashcardRow]s and persists them.
+  Future<void> _persistCards(List<Flashcard> cards) async {
+    final now = DateTime.now();
+    final rows = cards.asMap().entries.map((entry) {
+      final c = entry.value;
+      return FlashcardRow(
+        id: c.id,
+        courseId: _courseId,
+        sortOrder: entry.key,
+        front: c.front,
+        back: c.back,
+        sourceDocument: c.sourceDocument,
+        sourcePage: c.sourcePage,
+        createdAt: now,
+      );
+    }).toList();
+    await _dao.replaceByCourseId(_courseId, rows);
+  }
+
+  // ──────────────────── actions ────────────────────
 
   Future<void> generateFlashcards() async {
     state = state.copyWith(isGenerating: true, error: () => null);
@@ -85,7 +141,7 @@ class FlashcardNotifier extends StateNotifier<FlashcardState> {
         final cards = cardsJson.asMap().entries.map((entry) {
           final c = entry.value as Map<String, dynamic>;
           return Flashcard(
-            id: '${entry.key}',
+            id: const Uuid().v4(),
             front: c['front'] as String? ?? '',
             back: c['back'] as String? ?? '',
             sourceDocument: c['sourceDocument'] as String?,
@@ -99,6 +155,10 @@ class FlashcardNotifier extends StateNotifier<FlashcardState> {
           isFlipped: false,
           isGenerating: false,
         );
+
+        // Persist the new card set in the background.
+        await _persistCards(cards);
+
       case Failure(message: final msg):
         state = state.copyWith(
           isGenerating: false,
@@ -135,6 +195,8 @@ class FlashcardNotifier extends StateNotifier<FlashcardState> {
     if (state.cards.length < 2) return;
     final shuffled = List<Flashcard>.from(state.cards)..shuffle();
     state = state.copyWith(cards: shuffled, currentIndex: 0, isFlipped: false);
+    // Persist the shuffled order so it survives a restart.
+    _persistCards(shuffled);
   }
 }
 
@@ -142,6 +204,6 @@ final flashcardProvider =
     StateNotifierProvider.family<FlashcardNotifier, FlashcardState, String>(
   (ref, courseId) {
     final apiClient = ref.watch(apiClientProvider);
-    return FlashcardNotifier(apiClient, courseId);
+    return FlashcardNotifier(apiClient, FlashcardDao(), courseId);
   },
 );

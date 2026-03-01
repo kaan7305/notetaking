@@ -8,3 +8,4 @@ export 'stroke_dao.dart';
 export 'document_dao.dart';
 export 'text_element_dao.dart';
 export 'ai_messages_dao.dart';
+export 'flashcard_dao.dart';
