@@ -1,4 +1,9 @@
 
+## 2026-03-01 (cycle 12)
+
+### Added
+- **Connection/offline status indicator**: A global animated banner now appears at the top of every screen when the device has no internet connection. Implementation: `connectivity_plus` package added; `connectivityStreamProvider` (a `StreamProvider<List<ConnectivityResult>>`) streams OS-level network changes; `isOfflineProvider` derives a boolean that is `true` only when every interface returns `ConnectivityResult.none`. `OfflineBanner` (`lib/core/widgets/offline_banner.dart`) wraps the router child in a `Column` and uses `SizeTransition` + `AnimationController` to slide the amber banner in/out smoothly. It is wired into `MaterialApp.router`'s `builder` in `main.dart` so no per-screen boilerplate is needed. The banner is optimistic on startup (shows only after the first stream event) to avoid a false-offline flash at launch.
+
 ## 2026-03-01 (cycle 11)
 
 ### Fixed

@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app/config.dart';
 import 'app/router.dart';
 import 'app/theme.dart';
+import 'core/widgets/offline_banner.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,6 +40,10 @@ class StudyNotebookApp extends ConsumerWidget {
       darkTheme: AppTheme.dark(),
       themeMode: ThemeMode.system,
       routerConfig: router,
+      // Wrap the entire navigator in the global offline banner so it appears
+      // on every screen without any per-screen boilerplate.
+      builder: (context, child) =>
+          OfflineBanner(child: child ?? const SizedBox()),
     );
   }
 }

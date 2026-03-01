@@ -20,7 +20,7 @@
 - [x] 2026-03-01: Export current page as PNG/PDF
 - [x] 2026-03-01: Pinch-to-zoom during drawing tool active (currently disabled)
 - [x] 2026-03-01: Page reorder via drag in sidebar
-- [ ] Connection/offline status indicator
+- [x] 2026-03-01: Connection/offline status indicator
 - [ ] Database schema versioning / migration strategy
 
 ## Low Priority / Polish
