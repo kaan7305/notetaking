@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chmod +x \"/Users/kaaneroltu/Desktop/notebook app/autodev.sh\")"
+    ]
+  }
+}

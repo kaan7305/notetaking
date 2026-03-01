@@ -402,6 +402,55 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
     );
   }
 
+  // ─────────────── Move selection ───────────────
+
+  /// Snapshot undo state before a drag-move starts (called once per drag).
+  void pushUndoForMoveSnapshot() {
+    _pushUndoState();
+  }
+
+  /// Apply an incremental [delta] to all selected strokes and text elements.
+  void moveSelectedByDelta(Offset delta) {
+    if (!state.hasSelection) return;
+
+    final movedStrokes = state.strokes.map((stroke) {
+      if (!state.selectedStrokeIds.contains(stroke.id)) return stroke;
+      final movedPoints = stroke.points
+          .map((p) => StrokePoint(
+                x: p.x + delta.dx,
+                y: p.y + delta.dy,
+                pressure: p.pressure,
+                timestamp: p.timestamp,
+              ))
+          .toList();
+      return Stroke(
+        id: stroke.id,
+        pageId: stroke.pageId,
+        toolType: stroke.toolType,
+        color: stroke.color,
+        strokeWidth: stroke.strokeWidth,
+        points: movedPoints,
+        createdAt: stroke.createdAt,
+        penStyle: stroke.penStyle,
+      );
+    }).toList();
+
+    final movedTexts = state.textElements.map((el) {
+      if (!state.selectedTextIds.contains(el.id)) return el;
+      return el.copyWith(x: el.x + delta.dx, y: el.y + delta.dy);
+    }).toList();
+
+    state = state.copyWith(
+      strokes: movedStrokes,
+      textElements: movedTexts,
+    );
+  }
+
+  /// Call after a drag-move finishes to persist the new positions.
+  void finalizeSelectionMove() {
+    _markDirty();
+  }
+
   // ─────────────── Undo / Redo ───────────────
 
   void _pushUndoState() {

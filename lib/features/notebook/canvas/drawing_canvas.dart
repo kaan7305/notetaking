@@ -36,6 +36,11 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
   Offset? _hoverPosition;
   late final FocusNode _focusNode;
 
+  // Selection drag-to-move state.
+  bool _isDraggingSelection = false;
+  Offset? _selectionDragAnchor;
+  bool _selectionDragPushedUndo = false;
+
   @override
   void initState() {
     super.initState();
@@ -78,7 +83,24 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
               _handleTextTap(event.localPosition, notifier, canvasState);
               return;
             }
-            // Lasso: tap outside to clear existing selection.
+
+            // If there's a selection, check if the pointer is within the
+            // selection bounds — if so, start a drag-to-move gesture.
+            if (canvasState.hasSelection &&
+                !canvasState.isSelecting &&
+                (canvasState.currentTool == ToolType.pointer ||
+                    canvasState.currentTool == ToolType.lasso)) {
+              final bounds = _computeSelectionBounds(canvasState);
+              if (!bounds.isEmpty &&
+                  bounds.inflate(12).contains(event.localPosition)) {
+                _isDraggingSelection = true;
+                _selectionDragAnchor = event.localPosition;
+                _selectionDragPushedUndo = false;
+                return;
+              }
+            }
+
+            // Lasso: tap outside selection to clear it and start new selection.
             if (canvasState.currentTool == ToolType.lasso &&
                 canvasState.hasSelection &&
                 !canvasState.isSelecting) {
@@ -93,6 +115,20 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
           onPointerMove: (event) {
             if (canvasState.currentTool == ToolType.text) return;
             final notifier = ref.read(canvasProvider(widget.pageId).notifier);
+
+            // Handle selection drag-to-move.
+            if (_isDraggingSelection && _selectionDragAnchor != null) {
+              if (!_selectionDragPushedUndo) {
+                notifier.pushUndoForMoveSnapshot();
+                _selectionDragPushedUndo = true;
+              }
+              final delta = event.localPosition - _selectionDragAnchor!;
+              _selectionDragAnchor = event.localPosition;
+              notifier.moveSelectedByDelta(delta);
+              setState(() => _hoverPosition = event.localPosition);
+              return;
+            }
+
             notifier.onPointerMove(
               event.localPosition,
               event.pressure > 0 ? event.pressure : 0.5,
@@ -100,6 +136,14 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
             setState(() => _hoverPosition = event.localPosition);
           },
           onPointerUp: (_) {
+            if (_isDraggingSelection) {
+              _isDraggingSelection = false;
+              _selectionDragAnchor = null;
+              ref
+                  .read(canvasProvider(widget.pageId).notifier)
+                  .finalizeSelectionMove();
+              return;
+            }
             if (canvasState.currentTool == ToolType.text) return;
             ref.read(canvasProvider(widget.pageId).notifier).onPointerUp();
           },
@@ -161,6 +205,13 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
                           .read(canvasProvider(widget.pageId).notifier)
                           .deleteTextElement(el.id);
                     },
+                    // Allow dragging text elements when the text tool is active
+                    // and the element is not currently being edited.
+                    onPositionChanged: canvasState.currentTool == ToolType.text
+                        ? (x, y) => ref
+                            .read(canvasProvider(widget.pageId).notifier)
+                            .updateTextElement(el.copyWith(x: x, y: y))
+                        : null,
                   ),
                 // Floating selection action menu.
                 if (canvasState.hasSelection && !canvasState.isSelecting)
@@ -391,6 +442,9 @@ class _TextBox extends StatefulWidget {
   final VoidCallback onTap;
   final VoidCallback onDeactivate;
   final VoidCallback onDelete;
+  /// Called during drag with the new (x, y) position. Only provided when
+  /// dragging is supported (text tool active, element not being edited).
+  final void Function(double x, double y)? onPositionChanged;
 
   const _TextBox({
     super.key,
@@ -401,6 +455,7 @@ class _TextBox extends StatefulWidget {
     required this.onTap,
     required this.onDeactivate,
     required this.onDelete,
+    this.onPositionChanged,
   });
 
   @override
@@ -483,70 +538,87 @@ class _TextBoxState extends State<_TextBox> {
 
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      left: widget.element.x,
-      top: widget.element.y,
-      width: widget.element.width + (widget.isActive ? 28 : 0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Text field area — tappable to activate
-          Expanded(
-            child: GestureDetector(
-              onTap: widget.onTap,
+    final canDrag = !widget.isActive && widget.onPositionChanged != null;
+
+    final row = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Text field area — tappable to activate
+        Expanded(
+          child: GestureDetector(
+            onTap: canDrag ? null : widget.onTap,
+            child: Container(
+              decoration: _boxDecoration,
+              child: TextField(
+                controller: _ctrl,
+                focusNode: _focus,
+                maxLines: null,
+                style: TextStyle(
+                  fontSize: widget.element.fontSize,
+                  color: _textColor,
+                  fontFamily: widget.element.fontFamily == 'system'
+                      ? null
+                      : widget.element.fontFamily,
+                ),
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  isDense: true,
+                  contentPadding: EdgeInsets.all(4),
+                  hintText: 'Type here...',
+                ),
+                onChanged: (text) {
+                  widget.onChanged(widget.element.copyWith(content: text));
+                },
+              ),
+            ),
+          ),
+        ),
+        // Delete button — separate gesture zone, only visible when active
+        if (widget.isActive)
+          GestureDetector(
+            onTap: widget.onDelete,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 2),
               child: Container(
-                decoration: _boxDecoration,
-                child: TextField(
-                  controller: _ctrl,
-                  focusNode: _focus,
-                  maxLines: null,
-                  style: TextStyle(
-                    fontSize: widget.element.fontSize,
-                    color: _textColor,
-                    fontFamily: widget.element.fontFamily == 'system'
-                        ? null
-                        : widget.element.fontFamily,
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: AppColors.error.withValues(alpha: 0.4),
+                    width: 1,
                   ),
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: EdgeInsets.all(4),
-                    hintText: 'Type here...',
-                  ),
-                  onChanged: (text) {
-                    widget.onChanged(widget.element.copyWith(content: text));
-                  },
+                ),
+                child: Icon(
+                  Icons.close_rounded,
+                  size: 14,
+                  color: AppColors.error,
                 ),
               ),
             ),
           ),
-          // Delete button — separate gesture zone, only visible when active
-          if (widget.isActive)
-            GestureDetector(
-              onTap: widget.onDelete,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 2),
-                child: Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: AppColors.error.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: AppColors.error.withValues(alpha: 0.4),
-                      width: 1,
-                    ),
-                  ),
-                  child: Icon(
-                    Icons.close_rounded,
-                    size: 14,
-                    color: AppColors.error,
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
+      ],
+    );
+
+    return Positioned(
+      left: widget.element.x,
+      top: widget.element.y,
+      width: widget.element.width + (widget.isActive ? 28 : 0),
+      // When draggable: wrap in GestureDetector that handles pan and tap.
+      child: canDrag
+          ? GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: widget.onTap,
+              onPanUpdate: (details) {
+                widget.onPositionChanged!(
+                  widget.element.x + details.delta.dx,
+                  widget.element.y + details.delta.dy,
+                );
+              },
+              child: row,
+            )
+          : row,
     );
   }
 }
