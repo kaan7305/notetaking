@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:study_notebook/app/colors.dart';
+import 'package:study_notebook/core/providers/theme_provider.dart';
 import 'package:study_notebook/core/utils/constants.dart';
 import 'package:study_notebook/features/auth/auth_provider.dart';
 import 'package:study_notebook/features/auth/auth_state.dart';
@@ -59,6 +60,12 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
           ),
+
+          const SizedBox(height: 24),
+
+          // Appearance section.
+          const _SectionHeader(title: 'Appearance'),
+          _ThemeTile(),
 
           const SizedBox(height: 24),
 

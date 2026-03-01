@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:study_notebook/app/colors.dart';
@@ -119,7 +120,7 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-class _QuestionView extends StatelessWidget {
+class _QuestionView extends StatefulWidget {
   final PracticeQuestion question;
   final int currentIndex;
   final int totalQuestions;
@@ -139,167 +140,255 @@ class _QuestionView extends StatelessWidget {
   });
 
   @override
+  State<_QuestionView> createState() => _QuestionViewState();
+}
+
+class _QuestionViewState extends State<_QuestionView> {
+  final FocusNode _focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    // Grab focus so keyboard shortcuts work immediately without a tap.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _focusNode.requestFocus();
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  KeyEventResult _handleKey(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+
+    // Space / Enter — advance to next question (only after answering).
+    if (event.logicalKey == LogicalKeyboardKey.space ||
+        event.logicalKey == LogicalKeyboardKey.enter ||
+        event.logicalKey == LogicalKeyboardKey.numpadEnter) {
+      if (widget.showExplanation) {
+        widget.onNext();
+        return KeyEventResult.handled;
+      }
+      return KeyEventResult.ignored;
+    }
+
+    // A/B/C/D — select the corresponding option (only before answering).
+    if (!widget.showExplanation) {
+      final optionCount = widget.question.options.length;
+      int? selectedIndex;
+      switch (event.logicalKey) {
+        case LogicalKeyboardKey.keyA:
+          selectedIndex = 0;
+        case LogicalKeyboardKey.keyB:
+          selectedIndex = 1;
+        case LogicalKeyboardKey.keyC:
+          selectedIndex = 2;
+        case LogicalKeyboardKey.keyD:
+          selectedIndex = 3;
+      }
+      if (selectedIndex != null && selectedIndex < optionCount) {
+        widget.onSelect(selectedIndex);
+        return KeyEventResult.handled;
+      }
+    }
+
+    return KeyEventResult.ignored;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final progress = totalQuestions > 0
-        ? (currentIndex + (showExplanation ? 1 : 0)) / totalQuestions
+    final progress = widget.totalQuestions > 0
+        ? (widget.currentIndex + (widget.showExplanation ? 1 : 0)) /
+            widget.totalQuestions
         : 0.0;
 
-    return Column(
-      children: [
-        // Progress bar across the full width at the top.
-        TweenAnimationBuilder<double>(
-          tween: Tween(begin: 0, end: progress.toDouble()),
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-          builder: (_, value, __) => LinearProgressIndicator(
-            value: value,
-            minHeight: 4,
-            backgroundColor: Colors.grey.shade200,
-            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-          ),
-        ),
-        Expanded(
-          child: SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+    return Focus(
+      focusNode: _focusNode,
+      onKeyEvent: _handleKey,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Question.
-          Text(
-            question.question,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, height: 1.5),
+          // Progress bar across the full width at the top.
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: progress.toDouble()),
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+            builder: (_, value, __) => LinearProgressIndicator(
+              value: value,
+              minHeight: 4,
+              backgroundColor: Colors.grey.shade200,
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+            ),
           ),
-          const SizedBox(height: 24),
-
-          // Options.
-          ...question.options.asMap().entries.map((entry) {
-            final index = entry.key;
-            final option = entry.value;
-            final isSelected = selectedAnswer == index;
-            final isCorrect = index == question.correctIndex;
-
-            Color? bgColor;
-            Color? borderColor;
-            if (showExplanation) {
-              if (isCorrect) {
-                bgColor = AppColors.success.withValues(alpha: 0.1);
-                borderColor = AppColors.success;
-              } else if (isSelected) {
-                bgColor = AppColors.error.withValues(alpha: 0.1);
-                borderColor = AppColors.error;
-              }
-            } else if (isSelected) {
-              bgColor = AppColors.primary.withValues(alpha: 0.1);
-              borderColor = AppColors.primary;
-            }
-
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Material(
-                color: bgColor ?? Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: showExplanation ? null : () => onSelect(index),
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: borderColor ?? Colors.grey.shade300,
-                        width: isSelected || (showExplanation && isCorrect)
-                            ? 2
-                            : 1,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 28,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: borderColor ?? Colors.grey.shade400,
-                            ),
-                            color: isSelected || (showExplanation && isCorrect)
-                                ? borderColor
-                                : null,
-                          ),
-                          child: Center(
-                            child: Text(
-                              String.fromCharCode(65 + index), // A, B, C, D
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                                color:
-                                    isSelected || (showExplanation && isCorrect)
-                                        ? Colors.white
-                                        : null,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(option, style: const TextStyle(fontSize: 15)),
-                        ),
-                        if (showExplanation && isCorrect)
-                          const Icon(Icons.check_circle,
-                              color: AppColors.success, size: 22),
-                        if (showExplanation && isSelected && !isCorrect)
-                          const Icon(Icons.cancel,
-                              color: AppColors.error, size: 22),
-                      ],
-                    ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Question.
+                  Text(
+                    widget.question.question,
+                    style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        height: 1.5),
                   ),
-                ),
-              ),
-            );
-          }),
+                  const SizedBox(height: 24),
 
-          // Explanation.
-          if (showExplanation) ...[
-            const SizedBox(height: 16),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Explanation',
-                      style: TextStyle(
-                          fontWeight: FontWeight.w600, fontSize: 14),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      question.explanation,
-                      style: const TextStyle(height: 1.5),
-                    ),
-                    if (question.sourceDocument != null) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        'Source: ${question.sourceDocument}${question.sourcePage != null ? ', p.${question.sourcePage}' : ''}',
-                        style: TextStyle(
-                            fontSize: 12, color: Colors.grey.shade600),
+                  // Options.
+                  ...widget.question.options.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final option = entry.value;
+                    final isSelected = widget.selectedAnswer == index;
+                    final isCorrect = index == widget.question.correctIndex;
+
+                    Color? bgColor;
+                    Color? borderColor;
+                    if (widget.showExplanation) {
+                      if (isCorrect) {
+                        bgColor = AppColors.success.withValues(alpha: 0.1);
+                        borderColor = AppColors.success;
+                      } else if (isSelected) {
+                        bgColor = AppColors.error.withValues(alpha: 0.1);
+                        borderColor = AppColors.error;
+                      }
+                    } else if (isSelected) {
+                      bgColor = AppColors.primary.withValues(alpha: 0.1);
+                      borderColor = AppColors.primary;
+                    }
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Material(
+                        color: bgColor ?? Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: widget.showExplanation
+                              ? null
+                              : () => widget.onSelect(index),
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: borderColor ?? Colors.grey.shade300,
+                                width:
+                                    isSelected || (widget.showExplanation && isCorrect)
+                                        ? 2
+                                        : 1,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 28,
+                                  height: 28,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: borderColor ?? Colors.grey.shade400,
+                                    ),
+                                    color: isSelected ||
+                                            (widget.showExplanation && isCorrect)
+                                        ? borderColor
+                                        : null,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      String.fromCharCode(65 + index), // A, B, C, D
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
+                                        color: isSelected ||
+                                                (widget.showExplanation && isCorrect)
+                                            ? Colors.white
+                                            : null,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(option,
+                                      style:
+                                          const TextStyle(fontSize: 15)),
+                                ),
+                                if (widget.showExplanation && isCorrect)
+                                  const Icon(Icons.check_circle,
+                                      color: AppColors.success, size: 22),
+                                if (widget.showExplanation &&
+                                    isSelected &&
+                                    !isCorrect)
+                                  const Icon(Icons.cancel,
+                                      color: AppColors.error, size: 22),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
-                    ],
+                    );
+                  }),
+
+                  // Keyboard hint (shown below options).
+                  const SizedBox(height: 4),
+                  Text(
+                    widget.showExplanation
+                        ? 'Space / Enter → Next Question'
+                        : 'A / B / C / D to select',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        fontSize: 11, color: Colors.grey.shade400),
+                  ),
+
+                  // Explanation.
+                  if (widget.showExplanation) ...[
+                    const SizedBox(height: 16),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Explanation',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w600, fontSize: 14),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              widget.question.explanation,
+                              style: const TextStyle(height: 1.5),
+                            ),
+                            if (widget.question.sourceDocument != null) ...[
+                              const SizedBox(height: 8),
+                              Text(
+                                'Source: ${widget.question.sourceDocument}'
+                                '${widget.question.sourcePage != null ? ', p.${widget.question.sourcePage}' : ''}',
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade600),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton(
+                      onPressed: widget.onNext,
+                      child: const Text('Next Question'),
+                    ),
                   ],
-                ),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
-            FilledButton(
-              onPressed: onNext,
-              child: const Text('Next Question'),
-            ),
-          ],
+          ),
         ],
       ),
-          ),
-        ),
-      ],
     );
   }
 }

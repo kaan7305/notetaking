@@ -24,11 +24,12 @@ import 'package:sqflite/sqflite.dart';
 /// | 3       | `strokes`: added `pen_style TEXT DEFAULT 'standard'` |
 /// | 4       | `text_elements`: added `is_bold INTEGER DEFAULT 0`, `is_italic INTEGER DEFAULT 0` |
 /// | 5       | new `flashcards` table + `idx_flashcards_course_id` index |
+/// | 6       | new `preferences` key-value table for user settings (e.g. theme mode) |
 class DatabaseMigrations {
   DatabaseMigrations._();
 
   /// The current schema version.  Bump this when adding a new migration.
-  static const int currentVersion = 5;
+  static const int currentVersion = 6;
 
   /// Map of target-version → ordered list of SQL statements to apply.
   ///
@@ -58,6 +59,12 @@ class DatabaseMigrations {
         created_at INTEGER NOT NULL
       )''',
       'CREATE INDEX idx_flashcards_course_id ON flashcards(course_id)',
+    ],
+    6: [
+      '''CREATE TABLE preferences (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      )''',
     ],
   };
 

@@ -1,4 +1,13 @@
 
+## 2026-03-01 (cycle 19 — quiz keyboard shortcuts)
+
+### Added
+- **Keyboard shortcuts for quiz screen** (`quiz_screen.dart`):
+  - `A` / `B` / `C` / `D` — select the corresponding answer option while the question is unanswered. Respects option count so pressing D on a 3-option question is a no-op.
+  - `Space`, `Enter`, `Numpad Enter` — advance to the next question once the explanation is visible (i.e. after selecting an answer). Ignored before an answer is chosen so it cannot accidentally skip questions.
+  - `_QuestionView` converted from `StatelessWidget` to `StatefulWidget` (`_QuestionViewState`) with a `FocusNode` that is auto-requested in `initState` via `addPostFrameCallback`, matching the same approach used in `_FlashcardViewState` (cycle 17).
+  - A subtle 11 px grey hint label sits below the answer options and dynamically shows `"A / B / C / D to select"` before answering and `"Space / Enter → Next Question"` after the explanation is revealed.
+
 ## 2026-03-01 (cycle 18 — quiz UX + analyzer fix)
 
 ### Fixed

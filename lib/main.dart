@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app/config.dart';
 import 'app/router.dart';
 import 'app/theme.dart';
+import 'core/providers/theme_provider.dart';
 import 'core/utils/app_logger.dart';
 import 'core/widgets/offline_banner.dart';
 
@@ -40,13 +41,14 @@ class StudyNotebookApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
+    final themeMode = ref.watch(themeSettingProvider);
 
     return MaterialApp.router(
       title: 'StudyNotebook',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
-      themeMode: ThemeMode.system,
+      themeMode: themeMode,
       routerConfig: router,
       // Wrap the entire navigator in the global offline banner so it appears
       // on every screen without any per-screen boilerplate.

@@ -122,6 +122,14 @@ class DatabaseTables {
     )
   ''';
 
+  /// Simple key-value store for user preferences (e.g. theme mode).
+  static const String createPreferences = '''
+    CREATE TABLE preferences (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    )
+  ''';
+
   // ──────────────────────────────────────────────
   // CREATE INDEX statements
   // ──────────────────────────────────────────────
@@ -188,6 +196,7 @@ class DatabaseTables {
         createDocuments,
         createAiMessages,
         createFlashcards,
+        createPreferences,
         // Indexes
         indexNotebooksCourseId,
         indexPagesNotebookId,
