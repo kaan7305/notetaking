@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:sqflite/sqflite.dart';
 
+import 'database_migrations.dart';
 import 'database_tables.dart';
 
 /// Singleton helper that manages the SQLite database lifecycle.
@@ -33,7 +34,7 @@ class DatabaseHelper {
 
     return openDatabase(
       path,
-      version: 3,
+      version: DatabaseMigrations.currentVersion,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -45,21 +46,8 @@ class DatabaseHelper {
     }
   }
 
-  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 2) {
-      await db.execute(
-        "ALTER TABLE pages ADD COLUMN background_color TEXT DEFAULT '#FFFFFF'",
-      );
-      await db.execute(
-        'ALTER TABLE pages ADD COLUMN line_spacing REAL DEFAULT 32.0',
-      );
-    }
-    if (oldVersion < 3) {
-      await db.execute(
-        "ALTER TABLE strokes ADD COLUMN pen_style TEXT DEFAULT 'standard'",
-      );
-    }
-  }
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) =>
+      DatabaseMigrations.run(db, oldVersion, newVersion);
 
   /// Closes the database connection.
   Future<void> close() async {

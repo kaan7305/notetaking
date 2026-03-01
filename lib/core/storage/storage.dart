@@ -1,4 +1,5 @@
 export 'database_helper.dart';
+export 'database_migrations.dart';
 export 'database_tables.dart';
 export 'course_dao.dart';
 export 'notebook_dao.dart';

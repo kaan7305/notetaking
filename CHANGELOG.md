@@ -1,4 +1,9 @@
 
+## 2026-03-01 (cycle 13)
+
+### Added
+- **Database schema versioning / migration strategy**: Extracted all SQLite migration SQL out of `DatabaseHelper._onUpgrade` into a dedicated `DatabaseMigrations` class (`lib/core/storage/database_migrations.dart`). The class owns a `currentVersion` constant (currently 3) and a private `_migrations` map keyed by target version — each entry is an ordered list of SQL statements that bring the schema from the previous version to that version. `DatabaseHelper` now reads its `version:` argument from `DatabaseMigrations.currentVersion` and delegates `_onUpgrade` to `DatabaseMigrations.run()`, which iterates the map in ascending order so skipped-version upgrades (e.g. 1 → 4) are handled automatically. The file includes a "Schema history" table documenting what changed in every version. `DatabaseMigrations` is exported from the `storage.dart` barrel. Three new unit tests in `test/database_migrations_test.dart` verify the structural invariants (positive integer, ≥ 3, correct type).
+
 ## 2026-03-01 (cycle 12)
 
 ### Added

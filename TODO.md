@@ -21,7 +21,7 @@
 - [x] 2026-03-01: Pinch-to-zoom during drawing tool active (currently disabled)
 - [x] 2026-03-01: Page reorder via drag in sidebar
 - [x] 2026-03-01: Connection/offline status indicator
-- [ ] Database schema versioning / migration strategy
+- [x] 2026-03-01: Database schema versioning / migration strategy
 
 ## Low Priority / Polish
 - [ ] Animate selection action menu (fade in/out)
