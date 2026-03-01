@@ -287,16 +287,6 @@ void main() {
   });
 
   group('CanvasNotifier.selectAll', () {
-    Stroke makeStroke(String id) => Stroke(
-          id: id,
-          pageId: 'test-page',
-          toolType: 'pen',
-          color: '#FF000000',
-          strokeWidth: 2,
-          points: const [StrokePoint(x: 0, y: 0, pressure: 0.5, timestamp: 0)],
-          createdAt: DateTime(2026),
-        );
-
     TextElement makeText(String id) => TextElement(
           id: id,
           pageId: 'test-page',

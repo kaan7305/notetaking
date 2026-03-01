@@ -685,7 +685,7 @@ class _TextFormatToolbar extends ConsumerWidget {
                 children: [
                   _FormatToggleButton(
                     label: 'B',
-                    isActive: activeEl?.isBold ?? false,
+                    isActive: activeEl.isBold,
                     isBoldLabel: true,
                     onTap: () =>
                         updateEl((el) => el.copyWith(isBold: !el.isBold)),
@@ -694,7 +694,7 @@ class _TextFormatToolbar extends ConsumerWidget {
                   const SizedBox(width: 2),
                   _FormatToggleButton(
                     label: 'I',
-                    isActive: activeEl?.isItalic ?? false,
+                    isActive: activeEl.isItalic,
                     isBoldLabel: false,
                     onTap: () =>
                         updateEl((el) => el.copyWith(isItalic: !el.isItalic)),

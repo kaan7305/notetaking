@@ -99,6 +99,9 @@ class _AiChatPanelState extends ConsumerState<AiChatPanel> {
           if (chatState.error != null)
             _ErrorBanner(
               error: chatState.error!,
+              canRetry: chatState.retryContent != null,
+              onRetry: () =>
+                  ref.read(aiChatProvider(widget.courseId).notifier).retry(),
               onDismiss: () => ref
                   .read(aiChatProvider(widget.courseId).notifier)
                   .clearError(),
@@ -283,9 +286,16 @@ class _ChatInput extends StatelessWidget {
 
 class _ErrorBanner extends StatelessWidget {
   final String error;
+  final bool canRetry;
+  final VoidCallback onRetry;
   final VoidCallback onDismiss;
 
-  const _ErrorBanner({required this.error, required this.onDismiss});
+  const _ErrorBanner({
+    required this.error,
+    required this.canRetry,
+    required this.onRetry,
+    required this.onDismiss,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -298,8 +308,24 @@ class _ErrorBanner extends StatelessWidget {
           const Icon(Icons.error_outline, size: 16, color: AppColors.error),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(error, style: const TextStyle(fontSize: 12, color: AppColors.error)),
+            child: Text(
+              error,
+              style: const TextStyle(fontSize: 12, color: AppColors.error),
+            ),
           ),
+          if (canRetry)
+            TextButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh, size: 14),
+              label: const Text('Retry', style: TextStyle(fontSize: 12)),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.error,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
           IconButton(
             icon: const Icon(Icons.close, size: 16),
             onPressed: onDismiss,

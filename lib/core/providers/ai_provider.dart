@@ -13,11 +13,19 @@ class AiChatState {
   final bool isLoading;
   final String? error;
 
+  /// Content of the last user message that failed, used for retry.
+  final String? retryContent;
+
+  /// Optional image payload that was included in the failed message.
+  final String? retryImageBase64;
+
   const AiChatState({
     this.messages = const [],
     this.currentMode = AiMode.hint,
     this.isLoading = false,
     this.error,
+    this.retryContent,
+    this.retryImageBase64,
   });
 
   AiChatState copyWith({
@@ -25,12 +33,18 @@ class AiChatState {
     AiMode? currentMode,
     bool? isLoading,
     String? Function()? error,
+    String? Function()? retryContent,
+    String? Function()? retryImageBase64,
   }) {
     return AiChatState(
       messages: messages ?? this.messages,
       currentMode: currentMode ?? this.currentMode,
       isLoading: isLoading ?? this.isLoading,
       error: error != null ? error() : this.error,
+      retryContent:
+          retryContent != null ? retryContent() : this.retryContent,
+      retryImageBase64:
+          retryImageBase64 != null ? retryImageBase64() : this.retryImageBase64,
     );
   }
 }
@@ -63,8 +77,32 @@ class AiChatNotifier extends StateNotifier<AiChatState> {
       messages: [...state.messages, userMessage],
       isLoading: true,
       error: () => null,
+      retryContent: () => null,
+      retryImageBase64: () => null,
     );
 
+    await _dispatchRequest(content, imageBase64: imageBase64);
+  }
+
+  /// Retries the last failed message without adding a duplicate user message.
+  Future<void> retry() async {
+    final content = state.retryContent;
+    if (content == null) return;
+
+    final imageBase64 = state.retryImageBase64;
+
+    state = state.copyWith(
+      isLoading: true,
+      error: () => null,
+      retryContent: () => null,
+      retryImageBase64: () => null,
+    );
+
+    await _dispatchRequest(content, imageBase64: imageBase64);
+  }
+
+  /// Performs the actual HTTP call and updates state on success/failure.
+  Future<void> _dispatchRequest(String content, {String? imageBase64}) async {
     // Build the request body for the backend.
     final body = <String, dynamic>{
       'courseId': _courseId,
@@ -116,6 +154,8 @@ class AiChatNotifier extends StateNotifier<AiChatState> {
         state = state.copyWith(
           isLoading: false,
           error: () => msg,
+          retryContent: () => content,
+          retryImageBase64: () => imageBase64,
         );
     }
   }
@@ -125,7 +165,11 @@ class AiChatNotifier extends StateNotifier<AiChatState> {
   }
 
   void clearError() {
-    state = state.copyWith(error: () => null);
+    state = state.copyWith(
+      error: () => null,
+      retryContent: () => null,
+      retryImageBase64: () => null,
+    );
   }
 }
 

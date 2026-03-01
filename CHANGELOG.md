@@ -1,4 +1,18 @@
 
+## 2026-03-01 (cycle 12)
+
+### Added
+- **Retry button for failed AI chat requests** (`ai_provider.dart`, `ai_chat_panel.dart`):
+  - `AiChatState` now stores `retryContent` and `retryImageBase64` — the payload of the last failed message.
+  - New `AiChatNotifier.retry()` method re-fires the API request without adding a duplicate user message.
+  - `_dispatchRequest()` private helper extracted so both `sendMessage()` and `retry()` share the same API/state logic.
+  - `_ErrorBanner` widget gains an optional **Retry** button (shown only when retry data exists); dismiss-only behavior unchanged when there is nothing to retry.
+  - `clearError()` now also wipes `retryContent`/`retryImageBase64` so stale retry state never persists.
+
+### Fixed
+- Removed unnecessary `?.` null-aware operators on `activeEl.isBold` / `activeEl.isItalic` in `notebook_toolbar.dart` (both are inside an `else` block that guarantees non-null).
+- Removed unused `makeStroke` local helper from `canvas_notifier_test.dart`.
+
 ## 2026-03-01 (cycle 20)
 
 ### Added
