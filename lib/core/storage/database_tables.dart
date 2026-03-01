@@ -145,6 +145,18 @@ class DatabaseTables {
     )
   ''';
 
+  static const String createLectureNotes = '''
+    CREATE TABLE lecture_notes (
+      id TEXT PRIMARY KEY,
+      course_id TEXT NOT NULL REFERENCES courses(id),
+      title TEXT NOT NULL,
+      summary TEXT NOT NULL,
+      key_points_json TEXT NOT NULL,
+      full_notes TEXT NOT NULL,
+      created_at INTEGER NOT NULL
+    )
+  ''';
+
   // ──────────────────────────────────────────────
   // CREATE INDEX statements
   // ──────────────────────────────────────────────
@@ -201,6 +213,10 @@ class DatabaseTables {
     CREATE INDEX idx_documents_is_synced ON documents(is_synced)
   ''';
 
+  static const String indexLectureNotesCourseId = '''
+    CREATE INDEX idx_lecture_notes_course_id ON lecture_notes(course_id)
+  ''';
+
   // ──────────────────────────────────────────────
   // All statements in dependency order
   // ──────────────────────────────────────────────
@@ -217,6 +233,7 @@ class DatabaseTables {
         createFlashcards,
         createPracticeQuestions,
         createPreferences,
+        createLectureNotes,
         // Indexes
         indexNotebooksCourseId,
         indexPagesNotebookId,
@@ -231,5 +248,6 @@ class DatabaseTables {
         indexPagesIsSynced,
         indexStrokesIsSynced,
         indexDocumentsIsSynced,
+        indexLectureNotesCourseId,
       ];
 }
