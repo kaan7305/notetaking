@@ -269,6 +269,15 @@ class _PageThumbnail extends ConsumerWidget {
                             activeStroke: canvasState.activeStroke,
                           ),
                         ),
+                        // Text elements layer — renders text content in the
+                        // thumbnail so pages with typed content show correctly.
+                        CustomPaint(
+                          size: Size(AppDimensions.letterWidth,
+                              AppDimensions.letterHeight),
+                          painter: _TextElementsThumbnailPainter(
+                            textElements: canvasState.textElements,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -383,4 +392,55 @@ class _PageThumbnail extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// A [CustomPainter] that draws all [TextElement]s of a page onto the
+/// thumbnail canvas. This mirrors the text rendering from [DrawingCanvas]
+/// but uses [TextPainter] directly so it works inside the thumbnail's
+/// scaled [FittedBox] without needing editable [TextField]s.
+class _TextElementsThumbnailPainter extends CustomPainter {
+  final List<TextElement> textElements;
+
+  const _TextElementsThumbnailPainter({required this.textElements});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (final el in textElements) {
+      if (el.content.isEmpty) continue;
+
+      // Parse the hex color string (same guard as _hexToColor above).
+      Color color;
+      try {
+        final hex = el.color.replaceFirst('#', '');
+        final full = hex.length == 6 ? 'FF$hex' : hex;
+        if (full.length != 8) {
+          color = Colors.black;
+        } else {
+          color = Color(int.parse(full, radix: 16));
+        }
+      } catch (_) {
+        color = Colors.black;
+      }
+
+      final painter = TextPainter(
+        text: TextSpan(
+          text: el.content,
+          style: TextStyle(
+            fontSize: el.fontSize,
+            color: color,
+            fontWeight: el.isBold ? FontWeight.bold : FontWeight.normal,
+            fontStyle: el.isItalic ? FontStyle.italic : FontStyle.normal,
+            fontFamily: el.fontFamily == 'system' ? null : el.fontFamily,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      );
+      painter.layout(maxWidth: el.width);
+      painter.paint(canvas, Offset(el.x, el.y));
+    }
+  }
+
+  @override
+  bool shouldRepaint(_TextElementsThumbnailPainter oldDelegate) =>
+      oldDelegate.textElements != textElements;
 }

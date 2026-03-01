@@ -46,6 +46,7 @@
 - [x] 2026-03-01: Add analytics / error logging
 
 ## Completed
+- [x] 2026-03-01: Page thumbnail text element rendering (page_sidebar.dart — _TextElementsThumbnailPainter renders typed text alongside strokes in the sidebar thumbnail)
 - [x] 2026-03-01: Fix clearPage() to also clear text elements (was strokes-only — bug)
 - [x] 2026-03-01: Fix deactivate() save guard (now saves first page even when _selectedPageId is null)
 - [x] 2026-03-01: Defensive hex parsing in _PageThumbnail (page_sidebar.dart — same try/catch as notebook_screen.dart)

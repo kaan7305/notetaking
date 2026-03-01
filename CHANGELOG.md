@@ -1,4 +1,12 @@
 
+## 2026-03-01 (cycle 16)
+
+### Fixed
+- **Page thumbnail text element rendering** (`page_sidebar.dart`):
+  - Page thumbnails in the sidebar previously only rendered handwriting strokes. Any text elements added with the text tool were completely invisible in the thumbnail, making pages look empty even when they had typed content.
+  - Added a new `_TextElementsThumbnailPainter` (`CustomPainter`) that iterates `canvasState.textElements` and draws each element using `TextPainter` at its actual canvas coordinates. The painter respects `fontSize`, `color`, `isBold`, `isItalic`, and `fontFamily` so thumbnails visually match the page canvas. Empty `content` strings are skipped. Hex color strings are parsed with the same try/catch guard used elsewhere in the sidebar.
+  - The painter is inserted into the thumbnail `Stack` immediately after `StrokePainter` so text renders on top of strokes, matching the draw order on the main canvas. The existing `FittedBox` automatically scales the full-size thumbnail down to fit the sidebar panel — no layout changes required.
+
 ## 2026-03-01 (cycle 16 — flashcard UX)
 
 ### Improved
