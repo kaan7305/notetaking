@@ -571,6 +571,62 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
     state = state.copyWith(activeTextId: () => id);
   }
 
+  // ─────────────── Copy / Paste ───────────────
+
+  /// Pastes [strokes] and [textElements] from the clipboard onto this page.
+  ///
+  /// Each element receives a fresh ID and its [pageId] is set to [pageId] so
+  /// it belongs to this page. All pasted content is offset by [pasteOffset]
+  /// points so it doesn't land directly on top of the original.
+  void pasteFromClipboard(
+    List<Stroke> strokes,
+    List<TextElement> textElements, {
+    double pasteOffset = 24.0,
+  }) {
+    if (strokes.isEmpty && textElements.isEmpty) return;
+
+    _pushUndoState();
+
+    final newStrokes = strokes.map((s) {
+      final movedPoints = s.points
+          .map((p) => StrokePoint(
+                x: p.x + pasteOffset,
+                y: p.y + pasteOffset,
+                pressure: p.pressure,
+                timestamp: p.timestamp,
+              ))
+          .toList();
+      return Stroke(
+        id: const Uuid().v4(),
+        pageId: pageId,
+        toolType: s.toolType,
+        color: s.color,
+        strokeWidth: s.strokeWidth,
+        points: movedPoints,
+        createdAt: DateTime.now(),
+        penStyle: s.penStyle,
+      );
+    }).toList();
+
+    final newTexts = textElements.map((t) {
+      return t.copyWith(
+        id: const Uuid().v4(),
+        pageId: pageId,
+        x: t.x + pasteOffset,
+        y: t.y + pasteOffset,
+      );
+    }).toList();
+
+    state = state.copyWith(
+      strokes: [...state.strokes, ...newStrokes],
+      textElements: [...state.textElements, ...newTexts],
+      selectedStrokeIds: {for (final s in newStrokes) s.id},
+      selectedTextIds: {for (final t in newTexts) t.id},
+      redoStack: [],
+    );
+    _markDirty();
+  }
+
   // ─────────────── Zoom / Pan ───────────────
 
   void setZoom(double zoom) {

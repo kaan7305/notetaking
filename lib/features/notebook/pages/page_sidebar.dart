@@ -10,6 +10,8 @@ import 'package:study_notebook/features/notebook/canvas/page_background_painter.
 import 'package:study_notebook/features/notebook/canvas/stroke_painter.dart';
 
 /// A side panel showing page thumbnails for the current notebook.
+/// Pages can be reordered by dragging the handle icon at the bottom of each
+/// thumbnail.
 class PageSidebar extends ConsumerWidget {
   final String notebookId;
   final String selectedPageId;
@@ -130,14 +132,27 @@ class PageSidebar extends ConsumerWidget {
                     ),
                   );
                 }
-                return ListView.builder(
+                return ReorderableListView.builder(
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   itemCount: pages.length,
+                  buildDefaultDragHandles: false,
+                  onReorder: (oldIndex, newIndex) {
+                    // Flutter's newIndex is the insertion position *before* the
+                    // item at oldIndex is removed, so adjust when moving down.
+                    if (newIndex > oldIndex) newIndex -= 1;
+                    final pageId = pages[oldIndex].id;
+                    // reorderPage expects a 1-based position.
+                    ref
+                        .read(pageProvider(notebookId).notifier)
+                        .reorderPage(pageId, newIndex + 1);
+                  },
                   itemBuilder: (context, index) {
                     final page = pages[index];
                     final isSelected = page.id == selectedPageId;
                     return _PageThumbnail(
+                      key: ValueKey(page.id),
                       page: page,
+                      index: index,
                       isSelected: isSelected,
                       onTap: () => onPageSelected(page.id),
                       onDelete: pages.length > 1
@@ -161,12 +176,15 @@ class PageSidebar extends ConsumerWidget {
 
 class _PageThumbnail extends ConsumerWidget {
   final PageModel page;
+  final int index;
   final bool isSelected;
   final VoidCallback onTap;
   final VoidCallback? onDelete;
 
   const _PageThumbnail({
+    super.key,
     required this.page,
+    required this.index,
     required this.isSelected,
     required this.onTap,
     this.onDelete,
@@ -250,20 +268,43 @@ class _PageThumbnail extends ConsumerWidget {
                 ),
               ),
             ),
-            // Page number
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Text(
-                '${page.pageNumber}',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: isSelected
-                      ? AppColors.primary
-                      : (isDark
-                          ? AppColors.onSurfaceDark.withValues(alpha: 0.5)
-                          : AppColors.onSurfaceLight.withValues(alpha: 0.45)),
-                ),
+            // Page number row with drag handle
+            SizedBox(
+              height: 28,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Text(
+                    '${page.pageNumber}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color: isSelected
+                          ? AppColors.primary
+                          : (isDark
+                              ? AppColors.onSurfaceDark.withValues(alpha: 0.5)
+                              : AppColors.onSurfaceLight
+                                  .withValues(alpha: 0.45)),
+                    ),
+                  ),
+                  Positioned(
+                    right: 6,
+                    child: ReorderableDragStartListener(
+                      index: index,
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Icon(
+                          Icons.drag_handle_rounded,
+                          size: 14,
+                          color: isDark
+                              ? AppColors.onSurfaceDark.withValues(alpha: 0.3)
+                              : AppColors.onSurfaceLight.withValues(alpha: 0.25),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

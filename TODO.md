@@ -16,7 +16,7 @@
 - [x] 2026-03-01: Validate notebook/course name max length before creating (100-char limit + counter)
 
 ## Medium Priority
-- [ ] Move selected strokes across pages (copy/paste between pages)
+- [x] 2026-03-01: Move selected strokes across pages (copy/paste between pages)
 - [x] 2026-03-01: Export current page as PNG/PDF
 - [ ] Pinch-to-zoom during drawing tool active (currently disabled)
 - [ ] Page reorder via drag in sidebar

@@ -104,6 +104,8 @@ class AppStrings {
   static const String selectionBox = 'Box Select';
   static const String deleteSelected = 'Delete Selected';
   static const String clearSelection = 'Clear Selection';
+  static const String copySelected = 'Copy';
+  static const String pasteContent = 'Paste';
 
   // ---------------------------------------------------------------------------
   // AI Modes

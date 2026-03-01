@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:study_notebook/app/colors.dart';
 import 'package:study_notebook/core/models/models.dart';
+import 'package:study_notebook/core/providers/clipboard_provider.dart';
 
 import '../canvas/canvas_notifier.dart';
 
-/// Sub-toolbar shown when the lasso tool is active, with mode toggle and delete.
+/// Sub-toolbar shown when the lasso tool is active, with mode toggle,
+/// copy/paste, and delete.
 class SelectionToolbar extends ConsumerWidget {
   final String pageId;
 
@@ -15,6 +17,7 @@ class SelectionToolbar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final canvasState = ref.watch(canvasProvider(pageId));
+    final clipboard = ref.watch(clipboardProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
@@ -69,7 +72,24 @@ class SelectionToolbar extends ConsumerWidget {
             ),
           ),
           const Spacer(),
+          // ── Paste button — visible whenever clipboard has content ──
+          if (clipboard != null && !clipboard.isEmpty) ...[
+            _IconActionButton(
+              icon: Icons.content_paste_rounded,
+              tooltip: 'Paste',
+              color: AppColors.primary,
+              onTap: () {
+                ref.read(canvasProvider(pageId).notifier).pasteFromClipboard(
+                      clipboard.strokes,
+                      clipboard.textElements,
+                    );
+              },
+              isDark: isDark,
+            ),
+            const SizedBox(width: 6),
+          ],
           if (canvasState.hasSelection) ...[
+            // Selection count badge
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
@@ -77,7 +97,7 @@ class SelectionToolbar extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                '${canvasState.selectedStrokeIds.length} selected',
+                '${canvasState.selectedStrokeIds.length + canvasState.selectedTextIds.length} selected',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -85,27 +105,79 @@ class SelectionToolbar extends ConsumerWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 8),
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () => ref
-                    .read(canvasProvider(pageId).notifier)
-                    .deleteSelectedStrokes(),
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: AppColors.error.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(Icons.delete_outline_rounded,
-                      size: 18, color: AppColors.error),
-                ),
-              ),
+            const SizedBox(width: 6),
+            // ── Copy button ──
+            _IconActionButton(
+              icon: Icons.content_copy_rounded,
+              tooltip: 'Copy',
+              color: AppColors.primary,
+              onTap: () {
+                final selectedStrokes = canvasState.strokes
+                    .where((s) =>
+                        canvasState.selectedStrokeIds.contains(s.id))
+                    .toList();
+                final selectedTexts = canvasState.textElements
+                    .where((t) =>
+                        canvasState.selectedTextIds.contains(t.id))
+                    .toList();
+                ref
+                    .read(clipboardProvider.notifier)
+                    .copy(selectedStrokes, selectedTexts);
+              },
+              isDark: isDark,
+            ),
+            const SizedBox(width: 6),
+            // ── Delete button ──
+            _IconActionButton(
+              icon: Icons.delete_outline_rounded,
+              tooltip: 'Delete',
+              color: AppColors.error,
+              onTap: () => ref
+                  .read(canvasProvider(pageId).notifier)
+                  .deleteSelectedStrokes(),
+              isDark: isDark,
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// A small tappable icon button used in the selection toolbar.
+class _IconActionButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final Color color;
+  final VoidCallback onTap;
+  final bool isDark;
+
+  const _IconActionButton({
+    required this.icon,
+    required this.tooltip,
+    required this.color,
+    required this.onTap,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 18, color: color),
+          ),
+        ),
       ),
     );
   }

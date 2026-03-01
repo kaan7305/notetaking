@@ -1,4 +1,9 @@
 
+## 2026-03-01 (cycle 8)
+
+### Added
+- **Copy/paste selection across pages**: Tapping the **Copy** button in the selection toolbar stores the selected strokes and text elements in a new global `ClipboardProvider` (`clipboard_provider.dart`). The clipboard persists across page switches, so the content can be pasted onto any page. A **Paste** button appears in the selection toolbar whenever the clipboard is non-empty; tapping it calls `CanvasNotifier.pasteFromClipboard`, which clones each element with a fresh UUID, sets `pageId` to the current page, offsets coordinates by 24 pt so the paste is visually distinct, adds them to the canvas, selects all pasted elements, and triggers auto-save. Both buttons use the new `_IconActionButton` helper with tooltips. The selection count badge now reflects both stroke and text-element counts.
+
 ## 2026-03-01 (cycle 7)
 
 ### Added
