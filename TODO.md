@@ -17,7 +17,7 @@
 
 ## Medium Priority
 - [ ] Move selected strokes across pages (copy/paste between pages)
-- [ ] Export current page as PNG/PDF
+- [x] 2026-03-01: Export current page as PNG/PDF
 - [ ] Pinch-to-zoom during drawing tool active (currently disabled)
 - [ ] Page reorder via drag in sidebar
 - [ ] Connection/offline status indicator

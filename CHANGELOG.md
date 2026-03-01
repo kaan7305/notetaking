@@ -1,4 +1,9 @@
 
+## 2026-03-01 (cycle 7)
+
+### Added
+- **Export page as PNG**: A new share button (`ios_share_rounded` icon) appears in the notebook toolbar between the undo/redo group and the AI panel toggle. Tapping it renders the current canvas at 2× pixel density via `RepaintBoundary.toImage`, writes the PNG bytes to a temp file, and invokes `Share.shareXFiles` from `share_plus` — giving the user the native iOS/Android share sheet to save or send the image. On error a red `SnackBar` is shown. The `_captureCanvas()` → `_exportPage()` pattern reuses the existing `GlobalKey` + `RepaintBoundary` already in place for AI Check/Solve mode. New constants: `AppStrings.exportPage`, `.exportPageSubject`, `.exportError`.
+
 ## 2026-03-01 (cycle 6)
 
 ### Improved

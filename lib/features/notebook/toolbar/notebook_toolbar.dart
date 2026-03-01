@@ -230,6 +230,15 @@ class _NotebookToolbarState extends ConsumerState<NotebookToolbar> {
 
               _toolbarDivider(isDark),
 
+              // Export page button
+              if (widget.onExportPage != null)
+                _ModernToolbarButton(
+                  icon: Icons.ios_share_rounded,
+                  onPressed: widget.onExportPage,
+                  tooltip: AppStrings.exportPage,
+                  isDark: isDark,
+                ),
+
               // AI Assistant toggle
               if (widget.onToggleAiPanel != null)
                 _AiToggleButton(

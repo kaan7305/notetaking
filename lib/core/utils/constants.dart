@@ -128,6 +128,13 @@ class AppStrings {
   static const String noSearchResults = 'No results found.';
 
   // ---------------------------------------------------------------------------
+  // Export
+  // ---------------------------------------------------------------------------
+  static const String exportPage = 'Export Page';
+  static const String exportPageSubject = 'Notebook Page';
+  static const String exportError = 'Could not export the page.';
+
+  // ---------------------------------------------------------------------------
   // Errors
   // ---------------------------------------------------------------------------
   static const String genericError = 'Something went wrong. Please try again.';
