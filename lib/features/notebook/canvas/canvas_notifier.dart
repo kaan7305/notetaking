@@ -253,7 +253,8 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
   void _hitTestStroke(Offset position) {
     String? bestId;
     double bestDist = double.infinity;
-    const threshold = 20.0 * 20.0;
+    const threshold = AppDimensions.strokeHitTestThreshold *
+        AppDimensions.strokeHitTestThreshold;
 
     for (final stroke in state.strokes) {
       for (final point in stroke.points) {
@@ -362,10 +363,13 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
         }
       }
 
-      // Also check text elements.
+      // Also check text elements — use the actual rendered height so that
+      // multi-line boxes are fully captured by the lasso.
       for (final el in state.textElements) {
-        final center = Offset(el.x + el.width / 2, el.y + 10);
-        if (path.contains(Offset(el.x, el.y)) || path.contains(center)) {
+        final elHeight = estimateTextBoxHeight(el);
+        final topLeft = Offset(el.x, el.y);
+        final center = Offset(el.x + el.width / 2, el.y + elHeight / 2);
+        if (path.contains(topLeft) || path.contains(center)) {
           selectedTexts.add(el.id);
         }
       }
@@ -395,9 +399,10 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
         }
       }
 
-      // Also check text elements.
+      // Also check text elements using the actual rendered height.
       for (final el in state.textElements) {
-        final textRect = Rect.fromLTWH(el.x, el.y, el.width, 30);
+        final textRect =
+            Rect.fromLTWH(el.x, el.y, el.width, estimateTextBoxHeight(el));
         if (normalizedRect.overlaps(textRect)) {
           selectedTexts.add(el.id);
         }
@@ -581,7 +586,7 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
   void pasteFromClipboard(
     List<Stroke> strokes,
     List<TextElement> textElements, {
-    double pasteOffset = 24.0,
+    double pasteOffset = AppDimensions.pasteOffset,
   }) {
     if (strokes.isEmpty && textElements.isEmpty) return;
 

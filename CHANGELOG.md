@@ -1,4 +1,21 @@
 
+## 2026-03-01 (cycle 16)
+
+### Fixed
+- **Multi-line text-box hit testing**: Text elements with multi-line content are now correctly captured by taps, lasso selection, and box selection. Previously a hard-coded height of 30–40 px was used for all text boxes regardless of their actual content. A new `estimateTextBoxHeight(TextElement)` helper (in `core/utils/constants.dart`) uses `TextPainter.layout()` to compute the real rendered height, accounting for word wrapping and the element's declared `width` and `fontSize`. The computed height (clamped to a minimum of `AppDimensions.textBoxMinHeight = 28 px`) is now used in:
+  - `_handleTextTap` in `drawing_canvas.dart` — the tap hit-rect now covers the full text box height.
+  - `_computeSelectionBounds` in `drawing_canvas.dart` — the dashed selection bounds rect and drag-move hit zone now extend to the bottom of the last line.
+  - `_finalizeSelection` (both lasso and box paths) in `canvas_notifier.dart` — the hit-test rect / lasso centre point used to decide whether a text element is inside the selection now reflects the actual element height.
+
+### Chores
+- **Named constants for magic numbers** (`AppDimensions` in `core/utils/constants.dart`):
+  - `textBoxDeleteButtonWidth = 28.0` — replaces literal `28` in text-box hit rect width.
+  - `textBoxVerticalPadding = 12.0`, `textBoxMinHeight = 28.0` — used by `estimateTextBoxHeight`.
+  - `textBoxDefaultWidth = 200.0` — replaces literal `200` when creating a new text element.
+  - `selectionInflateHitTest = 12.0` — replaces literal `12` in drag-to-move inflate radius.
+  - `strokeHitTestThreshold = 20.0` — replaces `20.0 * 20.0` constant for pointer-tool hit distance.
+  - `pasteOffset = 24.0` — replaces the literal default argument in `pasteFromClipboard`.
+
 ## 2026-03-01 (cycle 15)
 
 ### Added

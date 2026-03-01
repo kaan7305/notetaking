@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,6 +41,14 @@ class DrawingCanvas extends ConsumerStatefulWidget {
 
 class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
   Offset? _hoverPosition;
+
+  /// Device kind of the most recent hover event.
+  ///
+  /// Used to suppress the custom cursor-preview overlay for stylus (Apple
+  /// Pencil) input: the OS already renders a pencil-tip hover indicator so
+  /// drawing a second circle on top would be redundant.
+  PointerDeviceKind? _lastHoverDeviceKind;
+
   late final FocusNode _focusNode;
 
   // Selection drag-to-move state.
@@ -191,7 +200,10 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
             }
           },
           onPointerHover: (event) {
-            setState(() => _hoverPosition = event.localPosition);
+            setState(() {
+              _hoverPosition = event.localPosition;
+              _lastHoverDeviceKind = event.kind;
+            });
           },
           child: MouseRegion(
             onExit: (_) => setState(() => _hoverPosition = null),
@@ -329,7 +341,12 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
       Offset position, CanvasNotifier notifier, CanvasState state) {
     // Check if the tap hit an existing text box.
     for (final el in state.textElements) {
-      final textRect = Rect.fromLTWH(el.x, el.y, el.width + 28, 40);
+      final textRect = Rect.fromLTWH(
+        el.x,
+        el.y,
+        el.width + AppDimensions.textBoxDeleteButtonWidth,
+        estimateTextBoxHeight(el),
+      );
       if (textRect.contains(position)) {
         // Already active — don't re-set state so child widgets (delete btn)
         // keep their gesture tracking and can handle the tap.
@@ -353,7 +370,7 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
       content: '',
       x: position.dx,
       y: position.dy,
-      width: 200,
+      width: AppDimensions.textBoxDefaultWidth,
       fontSize: 16.0,
       fontFamily: 'system',
       color: '#${state.currentColor.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase()}',
@@ -396,7 +413,8 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
       if (el.x < minX) minX = el.x;
       if (el.y < minY) minY = el.y;
       if (el.x + el.width > maxX) maxX = el.x + el.width;
-      if (el.y + 30 > maxY) maxY = el.y + 30;
+      final elBottom = el.y + estimateTextBoxHeight(el);
+      if (elBottom > maxY) maxY = elBottom;
     }
 
     if (minX == double.infinity) return Rect.zero;
