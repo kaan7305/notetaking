@@ -627,6 +627,21 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
     _markDirty();
   }
 
+  // ─────────────── Cancel gesture ───────────────
+
+  /// Abort any in-progress stroke or lasso gesture. Called when a second
+  /// finger lands on the canvas so that a pinch-to-zoom can take over without
+  /// leaving a dangling half-drawn stroke or incomplete lasso region.
+  void cancelActiveGesture() {
+    if (state.activeStroke == null && !state.isSelecting) return;
+    state = state.copyWith(
+      activeStroke: () => null,
+      isSelecting: false,
+      selectionLassoPoints: () => null,
+      selectionRect: () => null,
+    );
+  }
+
   // ─────────────── Zoom / Pan ───────────────
 
   void setZoom(double zoom) {

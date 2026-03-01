@@ -1,4 +1,9 @@
 
+## 2026-03-01 (cycle 10)
+
+### Added
+- **Pinch-to-zoom while drawing tool is active**: Two-finger pinch-to-zoom now works even when pen, highlighter, eraser, or lasso is the active tool. Previously `InteractiveViewer` had `scaleEnabled: !isDrawingTool`, which disabled zoom during drawing. The fix has three parts: (1) `scaleEnabled` in `_CanvasAreaState` is now unconditionally `true`; (2) `DrawingCanvas` tracks `_activePointerCount` via `onPointerDown`/`onPointerUp`/`onPointerCancel` and suppresses all drawing logic when >1 pointer is active; (3) a new `cancelActiveGesture()` method on `CanvasNotifier` clears any in-progress stroke or lasso selection when a second finger lands, so the pinch gesture starts cleanly without a dangling half-drawn stroke. Single-finger pan remains disabled while drawing tools are active.
+
 ## 2026-03-01 (cycle 9)
 
 ### Added

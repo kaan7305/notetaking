@@ -47,6 +47,11 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
   Offset? _selectionDragAnchor;
   bool _selectionDragPushedUndo = false;
 
+  // Multi-touch tracking: count how many pointers are currently pressed.
+  // Drawing is suppressed when >1 finger is down so a two-finger pinch-to-zoom
+  // gesture is not confused with a drawing stroke.
+  int _activePointerCount = 0;
+
   @override
   void initState() {
     super.initState();
@@ -84,8 +89,20 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
         key: widget.captureKey,
         child: Listener(
           onPointerDown: (event) {
+            _activePointerCount++;
             _focusNode.requestFocus();
             final notifier = ref.read(canvasProvider(widget.pageId).notifier);
+
+            // When a second finger comes down (pinch gesture starting), cancel
+            // any in-progress stroke/lasso and abort any selection drag so the
+            // InteractiveViewer can handle the pinch-to-zoom cleanly.
+            if (_activePointerCount > 1) {
+              notifier.cancelActiveGesture();
+              _isDraggingSelection = false;
+              _selectionDragAnchor = null;
+              return;
+            }
+
             if (canvasState.currentTool == ToolType.text) {
               _handleTextTap(event.localPosition, notifier, canvasState);
               return;
@@ -120,6 +137,9 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
             );
           },
           onPointerMove: (event) {
+            // Suppress all canvas drawing/interaction during multi-touch
+            // (two-finger pinch-to-zoom is handled by InteractiveViewer).
+            if (_activePointerCount > 1) return;
             if (canvasState.currentTool == ToolType.text) return;
             final notifier = ref.read(canvasProvider(widget.pageId).notifier);
 
@@ -143,6 +163,12 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
             setState(() => _hoverPosition = event.localPosition);
           },
           onPointerUp: (_) {
+            _activePointerCount = (_activePointerCount - 1).clamp(0, 10);
+
+            // If we're still in a multi-touch gesture (other fingers still
+            // down), don't commit a stroke.
+            if (_activePointerCount > 0) return;
+
             if (_isDraggingSelection) {
               _isDraggingSelection = false;
               _selectionDragAnchor = null;
@@ -153,6 +179,14 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
             }
             if (canvasState.currentTool == ToolType.text) return;
             ref.read(canvasProvider(widget.pageId).notifier).onPointerUp();
+          },
+          onPointerCancel: (_) {
+            // OS cancelled the pointer (e.g., InteractiveViewer took over).
+            _activePointerCount = (_activePointerCount - 1).clamp(0, 10);
+            if (_activePointerCount == 0) {
+              _isDraggingSelection = false;
+              _selectionDragAnchor = null;
+            }
           },
           onPointerHover: (event) {
             setState(() => _hoverPosition = event.localPosition);

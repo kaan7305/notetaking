@@ -289,7 +289,10 @@ class _CanvasAreaState extends ConsumerState<_CanvasArea> {
       maxScale: AppDimensions.canvasMaxZoom,
       boundaryMargin: const EdgeInsets.all(120),
       panEnabled: !isDrawingTool,
-      scaleEnabled: !isDrawingTool,
+      // Always allow 2-finger pinch-to-zoom even while a drawing tool is
+      // active.  The DrawingCanvas Listener guards against multi-touch by
+      // cancelling any in-progress stroke when a second pointer is detected.
+      scaleEnabled: true,
       child: Center(
         child: Container(
           width: pageSize.width,
