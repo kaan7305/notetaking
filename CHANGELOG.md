@@ -1,4 +1,15 @@
 
+## 2026-03-01 (cycle 18 — theme mode toggle)
+
+### Added
+- **Persistent theme mode preference** (`settings_screen.dart`, `theme_provider.dart`, `preferences_dao.dart`):
+  - Users can now choose **Light**, **System** (follows OS), or **Dark** theme from the Settings screen. The choice survives app restarts.
+  - New `preferences` SQLite table (schema v6, migration added to `DatabaseMigrations`). The table is a simple key/value store for future app-level preferences.
+  - `PreferencesDao` — lightweight DAO with `get(key, defaultValue)`, `set(key, value)`, and `remove(key)` methods backed by `ConflictAlgorithm.replace` upserts.
+  - `ThemeSettingNotifier` (`StateNotifier<ThemeMode>`) reads the persisted value from SQLite on construction and exposes `setMode(ThemeMode)` which updates state and persists atomically.
+  - `themeSettingProvider` wired into `MaterialApp.router` in `main.dart` replacing the previous hardcoded `ThemeMode.system`.
+  - `_ThemeTile` widget in `settings_screen.dart` renders a compact `SegmentedButton<ThemeMode>` with Light / System / Dark segments, light/dark/auto icons, and instant live preview — the entire app repaints as soon as a segment is tapped.
+
 ## 2026-03-01 (cycle 19 — quiz keyboard shortcuts)
 
 ### Added

@@ -3,6 +3,9 @@
 ## In Progress
 - (none)
 
+## Completed (cycle 18 — theme toggle)
+- [x] 2026-03-01: Persistent dark/light/system theme toggle in Settings — `preferences` SQLite table (migration v6), `PreferencesDao`, `ThemeSettingNotifier` / `themeSettingProvider`, `SegmentedButton<ThemeMode>` in Settings screen, `main.dart` wired to provider
+
 ## Completed (cycle 18)
 - [x] 2026-03-01: Fix missing `package:flutter/services.dart` import in `flashcard_screen.dart` — `KeyDownEvent` and `LogicalKeyboardKey` were unresolved (14 analyzer errors); adding the import clears all of them
 - [x] 2026-03-01: Quiz UX improvements — animated progress bar (`TweenAnimationBuilder<double>` + `LinearProgressIndicator`, 4 px, advances on answer reveal), per-score motivational message on completion screen (4 tiers: ≥90/≥70/≥50/<50), "New Questions" `OutlinedButton` on completion screen + matching AppBar icon button, "Regenerate" AppBar icon when quiz is complete

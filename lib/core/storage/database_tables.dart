@@ -122,6 +122,21 @@ class DatabaseTables {
     )
   ''';
 
+  static const String createPracticeQuestions = '''
+    CREATE TABLE practice_questions (
+      id TEXT PRIMARY KEY,
+      course_id TEXT NOT NULL REFERENCES courses(id),
+      sort_order INTEGER NOT NULL,
+      question TEXT NOT NULL,
+      options_json TEXT NOT NULL,
+      correct_index INTEGER NOT NULL,
+      explanation TEXT NOT NULL,
+      source_document TEXT,
+      source_page INTEGER,
+      created_at INTEGER NOT NULL
+    )
+  ''';
+
   /// Simple key-value store for user preferences (e.g. theme mode).
   static const String createPreferences = '''
     CREATE TABLE preferences (

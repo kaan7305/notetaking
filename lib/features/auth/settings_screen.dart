@@ -168,3 +168,50 @@ class _SettingsTile extends StatelessWidget {
     );
   }
 }
+
+/// Segmented-button tile that lets the user pick Light / System / Dark theme.
+class _ThemeTile extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final current = ref.watch(themeSettingProvider);
+    final notifier = ref.read(themeSettingProvider.notifier);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            const Icon(Icons.palette_outlined),
+            const SizedBox(width: 16),
+            const Expanded(child: Text('Theme')),
+            SegmentedButton<ThemeMode>(
+              style: SegmentedButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                textStyle: const TextStyle(fontSize: 12),
+              ),
+              selected: {current},
+              onSelectionChanged: (set) => notifier.setMode(set.first),
+              segments: const [
+                ButtonSegment(
+                  value: ThemeMode.light,
+                  icon: Icon(Icons.light_mode_outlined, size: 16),
+                  label: Text('Light'),
+                ),
+                ButtonSegment(
+                  value: ThemeMode.system,
+                  icon: Icon(Icons.brightness_auto_outlined, size: 16),
+                  label: Text('System'),
+                ),
+                ButtonSegment(
+                  value: ThemeMode.dark,
+                  icon: Icon(Icons.dark_mode_outlined, size: 16),
+                  label: Text('Dark'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
