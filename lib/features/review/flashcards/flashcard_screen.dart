@@ -144,6 +144,10 @@ class _FlashcardViewState extends State<_FlashcardView>
   late final AnimationController _controller;
   late Animation<double> _frontRotation;
   late Animation<double> _backRotation;
+  final FocusNode _focusNode = FocusNode();
+
+  /// Minimum horizontal drag velocity (px/s) to trigger card navigation.
+  static const _swipeVelocityThreshold = 300.0;
 
   @override
   void initState() {
@@ -154,6 +158,10 @@ class _FlashcardViewState extends State<_FlashcardView>
     );
     _buildAnimations();
     if (widget.isFlipped) _controller.value = 1.0;
+    // Grab focus so keyboard shortcuts work without requiring an explicit tap.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _focusNode.requestFocus();
+    });
   }
 
   void _buildAnimations() {
@@ -202,72 +210,120 @@ class _FlashcardViewState extends State<_FlashcardView>
 
   @override
   void dispose() {
+    _focusNode.dispose();
     _controller.dispose();
     super.dispose();
   }
 
+  KeyEventResult _handleKey(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+    switch (event.logicalKey) {
+      case LogicalKeyboardKey.arrowRight:
+        if (widget.hasNext) widget.onNext();
+        return KeyEventResult.handled;
+      case LogicalKeyboardKey.arrowLeft:
+        if (widget.hasPrevious) widget.onPrevious();
+        return KeyEventResult.handled;
+      case LogicalKeyboardKey.space:
+      case LogicalKeyboardKey.arrowUp:
+      case LogicalKeyboardKey.arrowDown:
+        widget.onFlip();
+        return KeyEventResult.handled;
+      default:
+        return KeyEventResult.ignored;
+    }
+  }
+
+  void _onHorizontalDragEnd(DragEndDetails details) {
+    final velocity = details.velocity.pixelsPerSecond.dx;
+    if (velocity < -_swipeVelocityThreshold) {
+      if (widget.hasNext) widget.onNext();
+    } else if (velocity > _swipeVelocityThreshold) {
+      if (widget.hasPrevious) widget.onPrevious();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: widget.onFlip,
-              child: AnimatedBuilder(
-                animation: _controller,
-                builder: (_, __) {
-                  final showFront = _controller.value <= 0.5;
-                  final rotation =
-                      showFront ? _frontRotation.value : _backRotation.value;
-                  return Transform(
-                    alignment: Alignment.center,
-                    transform: Matrix4.identity()
-                      ..setEntry(3, 2, 0.001)
-                      ..rotateY(rotation),
-                    child: showFront
-                        ? _CardFace(
-                            label: 'QUESTION',
-                            labelColor: AppColors.primary,
-                            text: widget.card.front,
-                            hint: 'Tap to reveal answer',
-                            sourceDocument: null,
-                            sourcePage: null,
-                          )
-                        : Transform(
-                            alignment: Alignment.center,
-                            transform: Matrix4.identity()..rotateY(math.pi),
-                            child: _CardFace(
-                              label: 'ANSWER',
-                              labelColor: AppColors.success,
-                              text: widget.card.back,
-                              hint: null,
-                              sourceDocument: widget.card.sourceDocument,
-                              sourcePage: widget.card.sourcePage,
-                            ),
-                          ),
-                  );
-                },
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+    final hintStyle = TextStyle(fontSize: 11, color: Colors.grey.shade400);
+    return Focus(
+      focusNode: _focusNode,
+      onKeyEvent: _handleKey,
+      child: GestureDetector(
+        // Tap anywhere to flip the card.
+        onTap: () {
+          widget.onFlip();
+          _focusNode.requestFocus();
+        },
+        // Horizontal swipe to navigate between cards.
+        onHorizontalDragEnd: _onHorizontalDragEnd,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
             children: [
-              IconButton.filled(
-                onPressed: widget.hasPrevious ? widget.onPrevious : null,
-                icon: const Icon(Icons.chevron_left),
+              Expanded(
+                child: AnimatedBuilder(
+                  animation: _controller,
+                  builder: (_, __) {
+                    final showFront = _controller.value <= 0.5;
+                    final rotation = showFront
+                        ? _frontRotation.value
+                        : _backRotation.value;
+                    return Transform(
+                      alignment: Alignment.center,
+                      transform: Matrix4.identity()
+                        ..setEntry(3, 2, 0.001)
+                        ..rotateY(rotation),
+                      child: showFront
+                          ? _CardFace(
+                              label: 'QUESTION',
+                              labelColor: AppColors.primary,
+                              text: widget.card.front,
+                              hint: 'Tap to reveal answer',
+                              sourceDocument: null,
+                              sourcePage: null,
+                            )
+                          : Transform(
+                              alignment: Alignment.center,
+                              transform:
+                                  Matrix4.identity()..rotateY(math.pi),
+                              child: _CardFace(
+                                label: 'ANSWER',
+                                labelColor: AppColors.success,
+                                text: widget.card.back,
+                                hint: null,
+                                sourceDocument: widget.card.sourceDocument,
+                                sourcePage: widget.card.sourcePage,
+                              ),
+                            ),
+                    );
+                  },
+                ),
               ),
-              const SizedBox(width: 32),
-              IconButton.filled(
-                onPressed: widget.hasNext ? widget.onNext : null,
-                icon: const Icon(Icons.chevron_right),
+              const SizedBox(height: 12),
+              // Swipe / keyboard hint
+              Text(
+                '← Swipe to navigate  •  Tap to flip',
+                style: hintStyle,
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton.filled(
+                    onPressed: widget.hasPrevious ? widget.onPrevious : null,
+                    icon: const Icon(Icons.chevron_left),
+                  ),
+                  const SizedBox(width: 32),
+                  IconButton.filled(
+                    onPressed: widget.hasNext ? widget.onNext : null,
+                    icon: const Icon(Icons.chevron_right),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }

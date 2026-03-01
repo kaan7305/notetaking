@@ -1,4 +1,18 @@
 
+## 2026-03-01 (cycle 17 — flashcard swipe gestures)
+
+### Added
+- **Swipe gestures for flashcard navigation** (`flashcard_screen.dart`):
+  - Wrapping the `_FlashcardView` in a `GestureDetector` with `onHorizontalDragEnd` gives users a natural swipe-to-navigate affordance. Swiping left navigates to the next card; swiping right navigates to the previous card. A velocity threshold of 300 px/s prevents accidental triggers during slow drags. Existing tap-to-flip is preserved on the same gesture detector — Flutter's arena resolver distinguishes minimal taps from intentional drags cleanly.
+  - A `Focus` node is auto-requested in `initState` (via `addPostFrameCallback`) so keyboard shortcuts work immediately on the flashcard screen without requiring an explicit tap first.
+- **Keyboard shortcuts for flashcard navigation** (`flashcard_screen.dart`):
+  - `→` (ArrowRight) — advance to the next card.
+  - `←` (ArrowLeft) — go back to the previous card.
+  - `Space`, `↑` (ArrowUp), `↓` (ArrowDown) — flip the current card.
+  - All keys return `KeyEventResult.handled` so the event is not forwarded to the Flutter framework.
+  - The `FocusNode` is disposed alongside the `AnimationController` in `dispose()`.
+- **Navigation hint** (`flashcard_screen.dart`): A subtle grey hint line — `← Swipe to navigate  •  Tap to flip` — is shown between the card and the navigation buttons. It uses `Colors.grey.shade400` at 11 px to communicate both gestures at a glance without visual noise.
+
 ## 2026-03-01 (cycle 16)
 
 ### Fixed

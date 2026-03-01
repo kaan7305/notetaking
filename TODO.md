@@ -3,6 +3,9 @@
 ## In Progress
 - (none)
 
+## Completed (cycle 17)
+- [x] 2026-03-01: Swipe gestures + keyboard shortcuts for flashcard navigation — horizontal swipe (left=next, right=previous), arrow keys (←→) + Space/↑↓ to flip, auto-focus on mount, subtle navigation hint below card
+
 ## Completed (cycle 16)
 - [x] 2026-03-01: Flashcard shuffle + reset — `FlashcardNotifier.shuffle()` (random reorder, jump to card 1), `FlashcardNotifier.reset()` now exposed via AppBar buttons; `_FlashcardView` rewritten as `StatefulWidget` with true 3D Y-axis flip animation (matrix perspective, 400 ms, easeIn/easeOut); card change (shuffle/nav) snaps to correct face without animation
 
