@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -20,16 +22,27 @@ class FlashcardScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Flashcards'),
         actions: [
-          if (state.cards.isNotEmpty)
+          if (state.cards.isNotEmpty) ...[
             Center(
               child: Padding(
-                padding: const EdgeInsets.only(right: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: Text(
                   '${state.currentIndex + 1} / ${state.cards.length}',
                   style: const TextStyle(fontSize: 14),
                 ),
               ),
             ),
+            IconButton(
+              icon: const Icon(Icons.shuffle_rounded),
+              tooltip: 'Shuffle cards',
+              onPressed: () => notifier.shuffle(),
+            ),
+            IconButton(
+              icon: const Icon(Icons.restart_alt_rounded),
+              tooltip: 'Restart from card 1',
+              onPressed: () => notifier.reset(),
+            ),
+          ],
         ],
       ),
       body: state.cards.isEmpty
@@ -103,7 +116,7 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-class _FlashcardView extends StatelessWidget {
+class _FlashcardView extends StatefulWidget {
   final Flashcard card;
   final bool isFlipped;
   final bool hasNext;
@@ -123,6 +136,77 @@ class _FlashcardView extends StatelessWidget {
   });
 
   @override
+  State<_FlashcardView> createState() => _FlashcardViewState();
+}
+
+class _FlashcardViewState extends State<_FlashcardView>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late Animation<double> _frontRotation;
+  late Animation<double> _backRotation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+    _buildAnimations();
+    if (widget.isFlipped) _controller.value = 1.0;
+  }
+
+  void _buildAnimations() {
+    _frontRotation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween(begin: 0.0, end: math.pi / 2)
+            .chain(CurveTween(curve: Curves.easeIn)),
+        weight: 50,
+      ),
+      TweenSequenceItem(
+        tween: ConstantTween<double>(math.pi / 2),
+        weight: 50,
+      ),
+    ]).animate(_controller);
+
+    _backRotation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: ConstantTween<double>(math.pi / 2),
+        weight: 50,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: math.pi / 2, end: 0.0)
+            .chain(CurveTween(curve: Curves.easeOut)),
+        weight: 50,
+      ),
+    ]).animate(_controller);
+  }
+
+  @override
+  void didUpdateWidget(_FlashcardView old) {
+    super.didUpdateWidget(old);
+    // Card changed (shuffle / next / previous) — snap back without animation.
+    if (old.card.id != widget.card.id) {
+      _controller.value = widget.isFlipped ? 1.0 : 0.0;
+      return;
+    }
+    // Flip state toggled — animate.
+    if (old.isFlipped != widget.isFlipped) {
+      if (widget.isFlipped) {
+        _controller.forward();
+      } else {
+        _controller.reverse();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(24),
@@ -130,62 +214,41 @@ class _FlashcardView extends StatelessWidget {
         children: [
           Expanded(
             child: GestureDetector(
-              onTap: onFlip,
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                child: Card(
-                  key: ValueKey('${card.id}_$isFlipped'),
-                  elevation: 4,
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(32),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          isFlipped ? 'ANSWER' : 'QUESTION',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: isFlipped
-                                ? AppColors.success
-                                : AppColors.primary,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        Text(
-                          isFlipped ? card.back : card.front,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            height: 1.5,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        if (!isFlipped)
-                          Text(
-                            'Tap to reveal answer',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade500,
+              onTap: widget.onFlip,
+              child: AnimatedBuilder(
+                animation: _controller,
+                builder: (_, __) {
+                  final showFront = _controller.value <= 0.5;
+                  final rotation =
+                      showFront ? _frontRotation.value : _backRotation.value;
+                  return Transform(
+                    alignment: Alignment.center,
+                    transform: Matrix4.identity()
+                      ..setEntry(3, 2, 0.001)
+                      ..rotateY(rotation),
+                    child: showFront
+                        ? _CardFace(
+                            label: 'QUESTION',
+                            labelColor: AppColors.primary,
+                            text: widget.card.front,
+                            hint: 'Tap to reveal answer',
+                            sourceDocument: null,
+                            sourcePage: null,
+                          )
+                        : Transform(
+                            alignment: Alignment.center,
+                            transform: Matrix4.identity()..rotateY(math.pi),
+                            child: _CardFace(
+                              label: 'ANSWER',
+                              labelColor: AppColors.success,
+                              text: widget.card.back,
+                              hint: null,
+                              sourceDocument: widget.card.sourceDocument,
+                              sourcePage: widget.card.sourcePage,
                             ),
                           ),
-                        if (isFlipped &&
-                            card.sourceDocument != null) ...[
-                          const SizedBox(height: 8),
-                          Text(
-                            '${card.sourceDocument}${card.sourcePage != null ? ', p.${card.sourcePage}' : ''}',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey.shade500,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
+                  );
+                },
               ),
             ),
           ),
@@ -194,17 +257,81 @@ class _FlashcardView extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               IconButton.filled(
-                onPressed: hasPrevious ? onPrevious : null,
+                onPressed: widget.hasPrevious ? widget.onPrevious : null,
                 icon: const Icon(Icons.chevron_left),
               ),
               const SizedBox(width: 32),
               IconButton.filled(
-                onPressed: hasNext ? onNext : null,
+                onPressed: widget.hasNext ? widget.onNext : null,
                 icon: const Icon(Icons.chevron_right),
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CardFace extends StatelessWidget {
+  final String label;
+  final Color labelColor;
+  final String text;
+  final String? hint;
+  final String? sourceDocument;
+  final int? sourcePage;
+
+  const _CardFace({
+    required this.label,
+    required this.labelColor,
+    required this.text,
+    required this.hint,
+    required this.sourceDocument,
+    required this.sourcePage,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 4,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: labelColor,
+                letterSpacing: 1.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              text,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 20, height: 1.5),
+            ),
+            if (hint != null) ...[
+              const SizedBox(height: 24),
+              Text(
+                hint!,
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+              ),
+            ],
+            if (sourceDocument != null) ...[
+              const SizedBox(height: 16),
+              Text(
+                '$sourceDocument${sourcePage != null ? ', p.$sourcePage' : ''}',
+                style:
+                    TextStyle(fontSize: 11, color: Colors.grey.shade500),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

@@ -130,6 +130,12 @@ class FlashcardNotifier extends StateNotifier<FlashcardState> {
   void reset() {
     state = state.copyWith(currentIndex: 0, isFlipped: false);
   }
+
+  void shuffle() {
+    if (state.cards.length < 2) return;
+    final shuffled = List<Flashcard>.from(state.cards)..shuffle();
+    state = state.copyWith(cards: shuffled, currentIndex: 0, isFlipped: false);
+  }
 }
 
 final flashcardProvider =

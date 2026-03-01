@@ -1,4 +1,12 @@
 
+## 2026-03-01 (cycle 16 — flashcard UX)
+
+### Improved
+- **Flashcard shuffle** (`flashcard_provider.dart`): New `FlashcardNotifier.shuffle()` method randomly reorders the in-memory card list with `List.shuffle()` and resets the index and flip state. No-op when there is only one card.
+- **Flashcard reset button** (`flashcard_screen.dart`): The existing `FlashcardNotifier.reset()` method (which already existed but was never called from the UI) is now wired to an `IconButton` (restart icon) in the `FlashcardScreen` AppBar, so users can jump back to card 1 without regenerating.
+- **Shuffle button** (`flashcard_screen.dart`): A second `IconButton` (shuffle icon) in the AppBar triggers the new `shuffle()`. Both buttons appear only when cards have been generated.
+- **True 3D flip animation** (`flashcard_screen.dart`): `_FlashcardView` was a `StatelessWidget` using `AnimatedSwitcher` (cross-fade). It is now a `StatefulWidget` with an `AnimationController` (400 ms) that drives a perspective-correct Y-axis rotation via `Matrix4.rotateY`. Two `TweenSequence` animations — `_frontRotation` (0 → π/2 using `easeIn`) and `_backRotation` (π/2 → 0 using `easeOut`) — give each face its own half of the arc. The front and back content is extracted into a reusable `_CardFace` widget. When the card identity changes (shuffle / navigation) the controller snaps to the target value without animation, preventing a spurious flip on page change.
+
 ## 2026-03-01 (cycle 15 — bug fixes)
 
 ### Fixed

@@ -3,6 +3,9 @@
 ## In Progress
 - (none)
 
+## Completed (cycle 16)
+- [x] 2026-03-01: Flashcard shuffle + reset — `FlashcardNotifier.shuffle()` (random reorder, jump to card 1), `FlashcardNotifier.reset()` now exposed via AppBar buttons; `_FlashcardView` rewritten as `StatefulWidget` with true 3D Y-axis flip animation (matrix perspective, 400 ms, easeIn/easeOut); card change (shuffle/nav) snaps to correct face without animation
+
 ## Medium Priority
 - [x] 2026-03-01: Add retry button for failed AI chat requests
 - [x] 2026-03-01: Validate PDF upload file size (warn if > 50 MB)
