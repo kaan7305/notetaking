@@ -1,4 +1,9 @@
 
+## 2026-03-01 (cycle 21 — flashcard JSON hardening)
+
+### Improved
+- **`flashcard_provider.dart`** — added outer `try/catch` around the full `data['flashcards']` list parsing block so an unexpected non-List server response surfaces as a friendly error message rather than an unhandled exception. Inner per-element safety was already present; this closes the remaining uncaught path.
+
 ## 2026-03-01 (cycle 20 — practice question persistence + JSON safety)
 
 ### Added
