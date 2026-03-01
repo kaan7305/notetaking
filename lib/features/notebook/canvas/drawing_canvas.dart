@@ -207,7 +207,8 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
           },
           child: MouseRegion(
             onExit: (_) => setState(() => _hoverPosition = null),
-            cursor: _cursorForTool(canvasState.currentTool),
+            cursor: _cursorForTool(
+                canvasState.currentTool, _lastHoverDeviceKind),
             child: Stack(
               children: [
                 // Page background (template pattern).
@@ -291,9 +292,13 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
                         .deleteSelectedStrokes();
                   },
                 ),
-                // Cursor preview overlay.
+                // Cursor preview overlay — only for mouse/trackpad input.
+                // Apple Pencil (stylus) already shows a system hover indicator
+                // so we skip the custom circle to avoid double-cursor clutter.
                 if (_hoverPosition != null &&
-                    canvasState.currentTool != ToolType.text)
+                    canvasState.currentTool != ToolType.text &&
+                    _lastHoverDeviceKind != PointerDeviceKind.stylus &&
+                    _lastHoverDeviceKind != PointerDeviceKind.invertedStylus)
                   CustomPaint(
                     size: widget.pageSize,
                     painter: _CursorPreviewPainter(
@@ -379,7 +384,16 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
     notifier.addTextElement(element);
   }
 
-  MouseCursor _cursorForTool(ToolType tool) {
+  MouseCursor _cursorForTool(ToolType tool, [PointerDeviceKind? kind]) {
+    // For stylus (Apple Pencil) input, let the OS own the cursor entirely.
+    // The system pencil-tip hover indicator is already visible; we return
+    // MouseCursor.defer so the nearest ancestor's cursor is used (effectively
+    // the default arrow), which the system then replaces with the pencil glyph.
+    if (kind == PointerDeviceKind.stylus ||
+        kind == PointerDeviceKind.invertedStylus) {
+      return MouseCursor.defer;
+    }
+
     switch (tool) {
       case ToolType.eraser:
         return SystemMouseCursors.precise;
@@ -390,6 +404,7 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
       case ToolType.lasso:
         return SystemMouseCursors.precise;
       default:
+        // Pen / highlighter: hide the OS cursor; the preview overlay takes over.
         return SystemMouseCursors.none;
     }
   }

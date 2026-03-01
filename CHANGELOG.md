@@ -1,4 +1,13 @@
 
+## 2026-03-01 (cycle 17)
+
+### Improved
+- **Stylus vs mouse cursor differentiation** (`drawing_canvas.dart`):
+  - Tracks `PointerDeviceKind` from every `onPointerHover` event.
+  - For Apple Pencil / inverted-stylus input the custom circular cursor-preview overlay is now suppressed — the OS-managed pencil-tip indicator already provides visual feedback and the old overlay was redundant/distracting.
+  - `_cursorForTool` now accepts an optional `PointerDeviceKind` parameter. When stylus input is detected it returns `MouseCursor.defer` (hands cursor ownership back to the system) instead of forcing `SystemMouseCursors.none`.
+  - Mouse/trackpad behaviour is unchanged: pen/highlighter tools still hide the OS cursor and show the filled-circle preview; eraser shows the circle outline; text shows the I-beam; pointer/lasso show the precise arrow.
+
 ## 2026-03-01 (cycle 16)
 
 ### Fixed
