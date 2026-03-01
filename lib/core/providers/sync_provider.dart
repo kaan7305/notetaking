@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:study_notebook/core/models/models.dart';
 import 'package:study_notebook/core/providers/connectivity_provider.dart';
 import 'package:study_notebook/core/providers/supabase_provider.dart';
 import 'package:study_notebook/core/storage/storage.dart';
@@ -150,7 +151,7 @@ class SyncNotifier extends StateNotifier<SyncState> {
 
   int _countResult<T>(Object result) {
     if (result is Success) {
-      final data = (result as Success).data;
+      final data = result.data;
       if (data is List) return data.length;
     }
     return 0;
@@ -161,7 +162,7 @@ class SyncNotifier extends StateNotifier<SyncState> {
   Future<void> _syncCourses() async {
     final result = await _courseDao.getUnsynced();
     if (result is! Success) return;
-    final courses = (result as Success).data as List;
+    final courses = result.data as List;
     if (courses.isEmpty) return;
 
     final rows = courses
@@ -186,7 +187,7 @@ class SyncNotifier extends StateNotifier<SyncState> {
   Future<void> _syncNotebooks() async {
     final result = await _notebookDao.getUnsynced();
     if (result is! Success) return;
-    final notebooks = (result as Success).data as List;
+    final notebooks = result.data as List;
     if (notebooks.isEmpty) return;
 
     final rows = notebooks
@@ -212,7 +213,7 @@ class SyncNotifier extends StateNotifier<SyncState> {
   Future<void> _syncPages() async {
     final result = await _pageDao.getUnsynced();
     if (result is! Success) return;
-    final pages = (result as Success).data as List;
+    final pages = result.data as List;
     if (pages.isEmpty) return;
 
     final rows = pages
@@ -238,7 +239,7 @@ class SyncNotifier extends StateNotifier<SyncState> {
   Future<void> _syncDocuments() async {
     final result = await _documentDao.getUnsynced();
     if (result is! Success) return;
-    final documents = (result as Success).data as List;
+    final documents = result.data as List;
     if (documents.isEmpty) return;
 
     // Only sync documents that have been successfully uploaded to Storage.

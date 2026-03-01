@@ -11,3 +11,4 @@ export 'ai_messages_dao.dart';
 export 'flashcard_dao.dart';
 export 'practice_question_dao.dart';
 export 'preferences_dao.dart';
+export 'lecture_note_dao.dart';
