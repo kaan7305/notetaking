@@ -1,4 +1,9 @@
 
+## 2026-03-01 (cycle 9)
+
+### Added
+- **Page reorder via drag in sidebar**: The page sidebar (`PageSidebar`) now uses `ReorderableListView.builder` instead of `ListView.builder`. Each page thumbnail displays a `drag_handle_rounded` icon at the bottom-right, wrapped in `ReorderableDragStartListener`. Dragging the handle reorders pages by calling the existing `PageNotifier.reorderPage(pageId, newPosition)` method — which renumbers and persists all affected pages. The long-press context menu (delete) is preserved. `buildDefaultDragHandles: false` keeps the default handle hidden so only the explicit icon is draggable.
+
 ## 2026-03-01 (cycle 8)
 
 ### Added

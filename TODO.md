@@ -19,7 +19,7 @@
 - [x] 2026-03-01: Move selected strokes across pages (copy/paste between pages)
 - [x] 2026-03-01: Export current page as PNG/PDF
 - [ ] Pinch-to-zoom during drawing tool active (currently disabled)
-- [ ] Page reorder via drag in sidebar
+- [x] 2026-03-01: Page reorder via drag in sidebar
 - [ ] Connection/offline status indicator
 - [ ] Database schema versioning / migration strategy
 
