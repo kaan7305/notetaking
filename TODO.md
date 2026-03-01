@@ -29,7 +29,7 @@
 - [x] 2026-03-01: Text box: multi-line height calculation for accurate hit testing
 - [x] 2026-03-01: Replace magic numbers with named constants (AppDimensions)
 - [x] 2026-03-01: Pencil cursor on iPad vs mouse cursor on desktop differentiation
-- [ ] Add analytics / error logging
+- [x] 2026-03-01: Add analytics / error logging
 
 ## Completed
 - [x] 2026-03-01: All PLAN.md phases 1–8 implemented

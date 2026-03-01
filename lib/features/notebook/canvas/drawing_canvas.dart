@@ -42,12 +42,20 @@ class DrawingCanvas extends ConsumerStatefulWidget {
 class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
   Offset? _hoverPosition;
 
-  /// Device kind of the most recent hover event.
-  ///
-  /// Used to suppress the custom cursor-preview overlay for stylus (Apple
-  /// Pencil) input: the OS already renders a pencil-tip hover indicator so
-  /// drawing a second circle on top would be redundant.
+  /// Device kind of the most recent hover event (mouse / trackpad hovering
+  /// above the surface without pressing).
   PointerDeviceKind? _lastHoverDeviceKind;
+
+  /// Device kind of the currently active pointer press (finger, stylus, etc.).
+  ///
+  /// Set on [onPointerDown] / [onPointerMove] and cleared on [onPointerUp] /
+  /// [onPointerCancel].  Together with [_lastHoverDeviceKind] this gives the
+  /// *effective* input kind at any point in time, which is used to:
+  ///   • suppress the custom cursor-preview overlay for touch and stylus input
+  ///     (the OS already renders its own indicators for those)
+  ///   • return [MouseCursor.defer] so the OS pencil-tip or touch indicator
+  ///     is not obscured by a Flutter-managed cursor.
+  PointerDeviceKind? _activePointerKind;
 
   late final FocusNode _focusNode;
 
@@ -99,6 +107,13 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
         child: Listener(
           onPointerDown: (event) {
             _activePointerCount++;
+            _activePointerKind = event.kind;
+            // When a touch or stylus press starts, clear any stale hover
+            // position from a previous mouse hover so the custom cursor-preview
+            // circle is not shown on top of the active touch/pencil input.
+            if (!_isCursorPreviewKind(event.kind)) {
+              _hoverPosition = null;
+            }
             _focusNode.requestFocus();
             final notifier = ref.read(canvasProvider(widget.pageId).notifier);
 
@@ -152,6 +167,7 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
             // (two-finger pinch-to-zoom is handled by InteractiveViewer).
             if (_activePointerCount > 1) return;
             if (canvasState.currentTool == ToolType.text) return;
+            _activePointerKind = event.kind;
             final notifier = ref.read(canvasProvider(widget.pageId).notifier);
 
             // Handle selection drag-to-move.
@@ -163,7 +179,11 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
               final delta = event.localPosition - _selectionDragAnchor!;
               _selectionDragAnchor = event.localPosition;
               notifier.moveSelectedByDelta(delta);
-              setState(() => _hoverPosition = event.localPosition);
+              // Only track hover position for mouse/trackpad — touch and stylus
+              // use their own OS indicators, not the custom circle overlay.
+              if (_isCursorPreviewKind(event.kind)) {
+                setState(() => _hoverPosition = event.localPosition);
+              }
               return;
             }
 
@@ -171,10 +191,13 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
               event.localPosition,
               event.pressure > 0 ? event.pressure : 0.5,
             );
-            setState(() => _hoverPosition = event.localPosition);
+            if (_isCursorPreviewKind(event.kind)) {
+              setState(() => _hoverPosition = event.localPosition);
+            }
           },
           onPointerUp: (_) {
             _activePointerCount = (_activePointerCount - 1).clamp(0, 10);
+            if (_activePointerCount == 0) _activePointerKind = null;
 
             // If we're still in a multi-touch gesture (other fingers still
             // down), don't commit a stroke.
@@ -195,6 +218,7 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
             // OS cancelled the pointer (e.g., InteractiveViewer took over).
             _activePointerCount = (_activePointerCount - 1).clamp(0, 10);
             if (_activePointerCount == 0) {
+              _activePointerKind = null;
               _isDraggingSelection = false;
               _selectionDragAnchor = null;
             }
@@ -203,12 +227,14 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
             setState(() {
               _hoverPosition = event.localPosition;
               _lastHoverDeviceKind = event.kind;
+              _activePointerKind = null; // hovering → no active press
             });
           },
           child: MouseRegion(
             onExit: (_) => setState(() => _hoverPosition = null),
             cursor: _cursorForTool(
-                canvasState.currentTool, _lastHoverDeviceKind),
+                canvasState.currentTool,
+                _activePointerKind ?? _lastHoverDeviceKind),
             child: Stack(
               children: [
                 // Page background (template pattern).
@@ -292,13 +318,17 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
                         .deleteSelectedStrokes();
                   },
                 ),
-                // Cursor preview overlay — only for mouse/trackpad input.
-                // Apple Pencil (stylus) already shows a system hover indicator
-                // so we skip the custom circle to avoid double-cursor clutter.
+                // Cursor preview overlay — only for mouse / trackpad input.
+                // Apple Pencil, touch (finger), and inverted stylus all have
+                // their own OS-level indicators; showing a custom circle on top
+                // would create double-cursor clutter.  We use the *effective*
+                // kind: the active press kind when a pointer is down, otherwise
+                // the last-seen hover kind (which is only ever set by
+                // mouse/stylus hover events).
                 if (_hoverPosition != null &&
                     canvasState.currentTool != ToolType.text &&
-                    _lastHoverDeviceKind != PointerDeviceKind.stylus &&
-                    _lastHoverDeviceKind != PointerDeviceKind.invertedStylus)
+                    _isCursorPreviewKind(
+                        _activePointerKind ?? _lastHoverDeviceKind))
                   CustomPaint(
                     size: widget.pageSize,
                     painter: _CursorPreviewPainter(
@@ -384,13 +414,26 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
     notifier.addTextElement(element);
   }
 
+  /// Returns `true` when the given [kind] should trigger the custom
+  /// cursor-preview circle overlay (i.e. the pointer is a mouse or trackpad).
+  ///
+  /// Touch and stylus inputs have OS-level visual feedback (finger lift /
+  /// pencil-tip indicator) and must NOT get the custom overlay.
+  /// A `null` kind (e.g. early first-frame state) is treated as non-preview so
+  /// we never show the circle unless we are certain it is a mouse.
+  static bool _isCursorPreviewKind(PointerDeviceKind? kind) {
+    return kind == PointerDeviceKind.mouse ||
+        kind == PointerDeviceKind.trackpad;
+  }
+
   MouseCursor _cursorForTool(ToolType tool, [PointerDeviceKind? kind]) {
-    // For stylus (Apple Pencil) input, let the OS own the cursor entirely.
-    // The system pencil-tip hover indicator is already visible; we return
-    // MouseCursor.defer so the nearest ancestor's cursor is used (effectively
-    // the default arrow), which the system then replaces with the pencil glyph.
+    // For stylus (Apple Pencil / inverted stylus) and touch (finger on iPad):
+    // let the OS own the cursor entirely.  Return MouseCursor.defer so the
+    // nearest ancestor cursor is used; the OS replaces it with the pencil glyph
+    // or hides the cursor during touch as appropriate.
     if (kind == PointerDeviceKind.stylus ||
-        kind == PointerDeviceKind.invertedStylus) {
+        kind == PointerDeviceKind.invertedStylus ||
+        kind == PointerDeviceKind.touch) {
       return MouseCursor.defer;
     }
 
@@ -404,7 +447,8 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
       case ToolType.lasso:
         return SystemMouseCursors.precise;
       default:
-        // Pen / highlighter: hide the OS cursor; the preview overlay takes over.
+        // Pen / highlighter on mouse/trackpad: hide OS cursor so the custom
+        // circle preview overlay is the only visual indicator.
         return SystemMouseCursors.none;
     }
   }

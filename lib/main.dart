@@ -8,10 +8,18 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app/config.dart';
 import 'app/router.dart';
 import 'app/theme.dart';
+import 'core/utils/app_logger.dart';
 import 'core/widgets/offline_banner.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Capture unhandled Flutter framework errors (widget build errors, etc.).
+  FlutterError.onError = AppLogger.onFlutterError;
+
+  // Capture unhandled async errors that escape the Flutter zone.
+  WidgetsBinding.instance.platformDispatcher.onError =
+      AppLogger.onPlatformError;
 
   // On web, use the FFI-web factory backed by sqflite_sw.js + sqlite3.wasm.
   if (kIsWeb) {

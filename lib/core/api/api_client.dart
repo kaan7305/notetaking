@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:study_notebook/core/models/result.dart';
+import 'package:study_notebook/core/utils/app_logger.dart';
 
 class ApiClient {
   final SupabaseClient _supabaseClient;
@@ -40,11 +41,14 @@ class ApiClient {
           .get(uri, headers: _headers)
           .timeout(_defaultTimeout);
       return _handleResponse(response);
-    } on SocketException {
+    } on SocketException catch (e, st) {
+      AppLogger.warning('GET network error', tag: 'ApiClient', error: e, stackTrace: st);
       return const Failure('Network error. Please check your connection.');
-    } on TimeoutException {
+    } on TimeoutException catch (e, st) {
+      AppLogger.warning('GET timeout', tag: 'ApiClient', error: e, stackTrace: st);
       return const Failure('Request timed out. Please try again.');
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.error('GET unexpected error', tag: 'ApiClient', error: e, stackTrace: st);
       return Failure('Unexpected error: ${e.toString()}');
     }
   }
@@ -64,11 +68,14 @@ class ApiClient {
           )
           .timeout(isUpload ? _uploadTimeout : _defaultTimeout);
       return _handleResponse(response);
-    } on SocketException {
+    } on SocketException catch (e, st) {
+      AppLogger.warning('POST network error', tag: 'ApiClient', error: e, stackTrace: st);
       return const Failure('Network error. Please check your connection.');
-    } on TimeoutException {
+    } on TimeoutException catch (e, st) {
+      AppLogger.warning('POST timeout', tag: 'ApiClient', error: e, stackTrace: st);
       return const Failure('Request timed out. Please try again.');
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.error('POST unexpected error', tag: 'ApiClient', error: e, stackTrace: st);
       return Failure('Unexpected error: ${e.toString()}');
     }
   }
@@ -87,11 +94,14 @@ class ApiClient {
           )
           .timeout(_defaultTimeout);
       return _handleResponse(response);
-    } on SocketException {
+    } on SocketException catch (e, st) {
+      AppLogger.warning('PUT network error', tag: 'ApiClient', error: e, stackTrace: st);
       return const Failure('Network error. Please check your connection.');
-    } on TimeoutException {
+    } on TimeoutException catch (e, st) {
+      AppLogger.warning('PUT timeout', tag: 'ApiClient', error: e, stackTrace: st);
       return const Failure('Request timed out. Please try again.');
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.error('PUT unexpected error', tag: 'ApiClient', error: e, stackTrace: st);
       return Failure('Unexpected error: ${e.toString()}');
     }
   }
@@ -110,11 +120,14 @@ class ApiClient {
           )
           .timeout(_defaultTimeout);
       return _handleResponse(response);
-    } on SocketException {
+    } on SocketException catch (e, st) {
+      AppLogger.warning('DELETE network error', tag: 'ApiClient', error: e, stackTrace: st);
       return const Failure('Network error. Please check your connection.');
-    } on TimeoutException {
+    } on TimeoutException catch (e, st) {
+      AppLogger.warning('DELETE timeout', tag: 'ApiClient', error: e, stackTrace: st);
       return const Failure('Request timed out. Please try again.');
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.error('DELETE unexpected error', tag: 'ApiClient', error: e, stackTrace: st);
       return Failure('Unexpected error: ${e.toString()}');
     }
   }
@@ -139,11 +152,14 @@ class ApiClient {
       final streamedResponse = await request.send().timeout(_uploadTimeout);
       final response = await http.Response.fromStream(streamedResponse);
       return _handleResponse(response);
-    } on SocketException {
+    } on SocketException catch (e, st) {
+      AppLogger.warning('Upload network error', tag: 'ApiClient', error: e, stackTrace: st);
       return const Failure('Network error. Please check your connection.');
-    } on TimeoutException {
+    } on TimeoutException catch (e, st) {
+      AppLogger.warning('Upload timeout', tag: 'ApiClient', error: e, stackTrace: st);
       return const Failure('Upload timed out. Please try again.');
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.error('Upload failed', tag: 'ApiClient', error: e, stackTrace: st);
       return Failure('Upload failed: ${e.toString()}');
     }
   }
@@ -163,8 +179,10 @@ class ApiClient {
         return Success({'raw': response.body});
       }
     } else if (response.statusCode == 401) {
+      AppLogger.warning('HTTP 401 Unauthorized', tag: 'ApiClient');
       return const Failure('Authentication failed. Please sign in again.');
     } else if (response.statusCode == 404) {
+      AppLogger.warning('HTTP 404 Not Found', tag: 'ApiClient');
       return const Failure('Resource not found.');
     } else {
       String message;
@@ -176,6 +194,10 @@ class ApiClient {
       } catch (_) {
         message = 'Server error (${response.statusCode})';
       }
+      AppLogger.error(
+        'HTTP ${response.statusCode}: $message',
+        tag: 'ApiClient',
+      );
       return Failure(message);
     }
   }

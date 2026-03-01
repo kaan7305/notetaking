@@ -1,4 +1,15 @@
 
+## 2026-03-01 (cycle 18)
+
+### Added
+- **Structured error / event logging** (`AppLogger` in `lib/core/utils/app_logger.dart`):
+  - Four log levels: `debug`, `info`, `warning`, `error`. In release builds only `warning` and `error` are emitted; `debug`/`info` are no-ops.
+  - Each call accepts an optional `tag` (source location), `data` (extra payload), `error` object, and `StackTrace`. Stack traces are truncated to the first 10 frames to keep the output readable.
+  - `AppLogger.onFlutterError` hooked into `FlutterError.onError` in `main.dart` — captures unhandled widget/framework exceptions and still delegates to Flutter's default error presenter so the standard debug error screen is preserved.
+  - `AppLogger.onPlatformError` hooked into `WidgetsBinding.instance.platformDispatcher.onError` — captures unhandled async errors that escape the Flutter zone.
+  - `ApiClient` (`lib/core/api/api_client.dart`) now calls `AppLogger.warning` for `SocketException` and `TimeoutException` on every verb (GET/POST/PUT/DELETE/upload), `AppLogger.error` for unexpected catch-all errors, and `AppLogger.error` / `AppLogger.warning` for non-2xx HTTP responses (401, 404, 5xx).
+  - No new external dependencies required — uses `package:flutter/foundation.dart`'s `debugPrint`.
+
 ## 2026-03-01 (cycle 17)
 
 ### Improved
