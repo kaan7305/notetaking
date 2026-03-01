@@ -116,7 +116,9 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
                     canvasState.currentTool == ToolType.lasso)) {
               final bounds = _computeSelectionBounds(canvasState);
               if (!bounds.isEmpty &&
-                  bounds.inflate(12).contains(event.localPosition)) {
+                  bounds
+                      .inflate(AppDimensions.selectionInflateHitTest)
+                      .contains(event.localPosition)) {
                 _isDraggingSelection = true;
                 _selectionDragAnchor = event.localPosition;
                 _selectionDragPushedUndo = false;
@@ -217,10 +219,6 @@ class _DrawingCanvasState extends ConsumerState<DrawingCanvas> {
                     selectionLassoPoints: canvasState.selectionLassoPoints,
                     selectionRect: canvasState.selectionRect,
                     isSelecting: canvasState.isSelecting,
-                    selectionBoundsRect:
-                        (canvasState.hasSelection && !canvasState.isSelecting)
-                            ? _computeSelectionBounds(canvasState)
-                            : null,
                   ),
                 ),
                 // Text elements.

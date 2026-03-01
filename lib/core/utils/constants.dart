@@ -1,3 +1,36 @@
+import 'package:flutter/painting.dart';
+
+import '../models/text_element.dart';
+
+// ---------------------------------------------------------------------------
+// Text-box height helper
+// ---------------------------------------------------------------------------
+
+/// Returns the estimated rendered height of [el] using [TextPainter].
+///
+/// Properly accounts for multi-line content and word wrapping within the
+/// element's declared [TextElement.width], making hit-testing and selection
+/// bounds accurate for both single- and multi-line text boxes.
+double estimateTextBoxHeight(TextElement el) {
+  final span = TextSpan(
+    // Use a non-empty string so TextPainter returns at least one line height.
+    text: el.content.isEmpty ? ' ' : el.content,
+    style: TextStyle(
+      fontSize: el.fontSize,
+      fontFamily: el.fontFamily == 'system' ? null : el.fontFamily,
+    ),
+  );
+  final painter = TextPainter(
+    text: span,
+    textDirection: TextDirection.ltr,
+  );
+  painter.layout(maxWidth: el.width);
+  return (painter.height + AppDimensions.textBoxVerticalPadding)
+      .clamp(AppDimensions.textBoxMinHeight, double.infinity);
+}
+
+// ---------------------------------------------------------------------------
+
 /// Layout dimensions, page sizes, and timing constants used throughout the app.
 class AppDimensions {
   AppDimensions._();
@@ -34,6 +67,29 @@ class AppDimensions {
   // Timing (milliseconds)
   static const int autoSaveDelayMs = 2000;
   static const int syncIntervalMs = 60000;
+
+  // Text box
+  /// Width of the delete button shown beside an active text box.
+  static const double textBoxDeleteButtonWidth = 28.0;
+  /// Total vertical padding (top + bottom) added around the text content
+  /// when estimating a text box's rendered height.
+  static const double textBoxVerticalPadding = 12.0;
+  /// Minimum hit-test height for any text box (a single-line empty box).
+  static const double textBoxMinHeight = 28.0;
+  /// Default width assigned to a newly created text box.
+  static const double textBoxDefaultWidth = 200.0;
+
+  // Selection / hit testing
+  /// Inflate radius applied to selection bounds for the drag-to-move hit zone.
+  static const double selectionInflateHitTest = 12.0;
+  /// Distance (in canvas points) within which a pointer is considered to have
+  /// hit a stroke point during pointer-tool selection.
+  static const double strokeHitTestThreshold = 20.0;
+
+  // Copy / paste
+  /// Offset (in canvas points) applied to pasted content so it doesn't land
+  /// exactly on top of the original.
+  static const double pasteOffset = 24.0;
 }
 
 /// User‑facing strings.
