@@ -210,19 +210,19 @@ class _NotebookToolbarState extends ConsumerState<NotebookToolbar> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _ModernToolbarButton(
+                    _UndoRedoButton(
                       icon: Icons.undo_rounded,
+                      count: canvasState.undoStack.length,
                       onPressed: canvasState.canUndo ? () => _undo() : null,
                       tooltip: 'Undo',
                       isDark: isDark,
-                      compact: true,
                     ),
-                    _ModernToolbarButton(
+                    _UndoRedoButton(
                       icon: Icons.redo_rounded,
+                      count: canvasState.redoStack.length,
                       onPressed: canvasState.canRedo ? () => _redo() : null,
                       tooltip: 'Redo',
                       isDark: isDark,
-                      compact: true,
                     ),
                   ],
                 ),
@@ -394,7 +394,6 @@ class _ModernToolbarButton extends StatelessWidget {
   final String tooltip;
   final bool isDark;
   final bool isActive;
-  final bool compact;
 
   const _ModernToolbarButton({
     required this.icon,
@@ -403,7 +402,6 @@ class _ModernToolbarButton extends StatelessWidget {
     required this.tooltip,
     required this.isDark,
     this.isActive = false,
-    this.compact = false,
   });
 
   @override
@@ -417,7 +415,7 @@ class _ModernToolbarButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
-            padding: EdgeInsets.all(compact ? 6 : 8),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: isActive
                   ? (isDark
@@ -428,7 +426,7 @@ class _ModernToolbarButton extends StatelessWidget {
             ),
             child: Icon(
               icon,
-              size: compact ? 18 : 20,
+              size: 20,
               color: iconColor ??
                   (onPressed == null
                       ? (isDark
@@ -548,6 +546,83 @@ class _AiToggleButton extends StatelessWidget {
                   : (isDark
                       ? AppColors.onSurfaceDark.withValues(alpha: 0.6)
                       : AppColors.onSurfaceLight.withValues(alpha: 0.5)),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Undo or redo button that shows the remaining step count below the icon.
+///
+/// The count is only shown when it is greater than zero, using a small bold
+/// label styled with the app's primary colour so it's easy to scan at a
+/// glance without cluttering the toolbar.
+class _UndoRedoButton extends StatelessWidget {
+  final IconData icon;
+  final int count;
+  final VoidCallback? onPressed;
+  final String tooltip;
+  final bool isDark;
+
+  const _UndoRedoButton({
+    required this.icon,
+    required this.count,
+    required this.onPressed,
+    required this.tooltip,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onPressed != null;
+    final countLabel = count > 99 ? '99+' : '$count';
+    final tooltipMsg = count > 0 ? '$tooltip ($count)' : tooltip;
+
+    return Tooltip(
+      message: tooltipMsg,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(10),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: 18,
+                  color: enabled
+                      ? (isDark
+                          ? AppColors.onSurfaceDark.withValues(alpha: 0.7)
+                          : AppColors.onSurfaceLight.withValues(alpha: 0.6))
+                      : (isDark
+                          ? AppColors.onSurfaceDark.withValues(alpha: 0.2)
+                          : AppColors.onSurfaceLight.withValues(alpha: 0.2)),
+                ),
+                if (count > 0)
+                  Text(
+                    countLabel,
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      height: 1.1,
+                      color: enabled
+                          ? AppColors.primary.withValues(alpha: 0.85)
+                          : (isDark
+                              ? AppColors.onSurfaceDark.withValues(alpha: 0.2)
+                              : AppColors.onSurfaceLight.withValues(alpha: 0.2)),
+                    ),
+                  )
+                else
+                  // Reserve the same height so the icon doesn't jump when count
+                  // appears / disappears.
+                  const SizedBox(height: 10),
+              ],
             ),
           ),
         ),

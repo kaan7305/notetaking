@@ -155,6 +155,11 @@ class PageSidebar extends ConsumerWidget {
                       index: index,
                       isSelected: isSelected,
                       onTap: () => onPageSelected(page.id),
+                      onDuplicate: () {
+                        ref
+                            .read(pageProvider(notebookId).notifier)
+                            .duplicatePage(page.id);
+                      },
                       onDelete: pages.length > 1
                           ? () {
                               ref
@@ -179,6 +184,7 @@ class _PageThumbnail extends ConsumerWidget {
   final int index;
   final bool isSelected;
   final VoidCallback onTap;
+  final VoidCallback? onDuplicate;
   final VoidCallback? onDelete;
 
   const _PageThumbnail({
@@ -187,6 +193,7 @@ class _PageThumbnail extends ConsumerWidget {
     required this.index,
     required this.isSelected,
     required this.onTap,
+    this.onDuplicate,
     this.onDelete,
   });
 
@@ -197,7 +204,7 @@ class _PageThumbnail extends ConsumerWidget {
 
     return GestureDetector(
       onTap: onTap,
-      onLongPress: onDelete != null ? () => _showContextMenu(context) : null,
+      onLongPress: () => _showContextMenu(context),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -328,10 +335,14 @@ class _PageThumbnail extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: Icon(Icons.delete_outline_rounded,
-                  color: AppColors.error),
+              leading: Icon(
+                Icons.copy_rounded,
+                color: isDark
+                    ? AppColors.onSurfaceDark
+                    : AppColors.onSurfaceLight,
+              ),
               title: Text(
-                'Delete Page',
+                'Duplicate Page',
                 style: TextStyle(
                   fontWeight: FontWeight.w500,
                   color: isDark
@@ -341,9 +352,27 @@ class _PageThumbnail extends ConsumerWidget {
               ),
               onTap: () {
                 Navigator.pop(context);
-                onDelete?.call();
+                onDuplicate?.call();
               },
             ),
+            if (onDelete != null)
+              ListTile(
+                leading: Icon(Icons.delete_outline_rounded,
+                    color: AppColors.error),
+                title: Text(
+                  'Delete Page',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    color: isDark
+                        ? AppColors.onSurfaceDark
+                        : AppColors.onSurfaceLight,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  onDelete?.call();
+                },
+              ),
           ],
         ),
       ),

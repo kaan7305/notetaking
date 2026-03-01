@@ -1,4 +1,12 @@
 
+## 2026-03-01 (cycle 22)
+
+### Added
+- **Page duplicate feature** (`page_provider.dart`, `page_sidebar.dart`):
+  - New `PageNotifier.duplicatePage(sourcePageId)` method: inserts a copy of the source page immediately after it, renumbers all subsequent pages, then batch-copies all strokes and text elements to the new page using new UUIDs.
+  - `PageNotifier` now receives `StrokeDao` and `TextElementDao` as constructor dependencies.
+  - Long-pressing a page thumbnail in the sidebar now always shows a context menu (previously only shown when deletion was possible). The menu contains a **Duplicate Page** option (always visible) and a **Delete Page** option (only shown when there are more than one page).
+
 ## 2026-03-01 (cycle 21)
 
 ### Fixed / Improved

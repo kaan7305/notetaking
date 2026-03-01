@@ -160,7 +160,7 @@ class PageNotifier extends StateNotifier<AsyncValue<List<PageModel>>> {
       updatedAt: now,
     );
     final insertResult = await _dao.insert(newPage);
-    if (insertResult is Failure) {
+    if (insertResult is Failure<PageModel>) {
       return Failure(insertResult.message, insertResult.error);
     }
 

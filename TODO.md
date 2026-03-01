@@ -11,8 +11,8 @@
 
 ## Low Priority / Polish
 - [x] 2026-03-01: Typing indicator dark-mode support (uses theme-aware colorScheme colors)
-- [ ] Undo/redo count indicator in toolbar (show remaining steps)
-- [ ] Page duplicate feature in sidebar long-press menu
+- [x] 2026-03-01: Undo/redo count indicator in toolbar (show remaining steps)
+- [x] 2026-03-01: Page duplicate feature in sidebar long-press menu
 
 ## High Priority
 
